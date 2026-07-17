@@ -12,8 +12,9 @@ realizability are outside the verified core unless a physical model is added exp
 
 ## Status
 
-Stage 1 (source audit and reproducible Lean setup) is in progress. No substantive theorem from the
-paper is represented as formalized yet.
+Stages 1 and 2 are complete: the source/setup audit and the finite Boolean/component API build and
+have recorded axiom audits. Stage 3 is formalizing generalized Toffoli permutations; decomposition,
+parity, qualified universality, and smooth extension remain in progress.
 
 ## Lean setup
 
@@ -23,6 +24,7 @@ The Lean project is isolated in `formal/` and pins Lean 4.32.0 plus an exact mat
 cd formal
 lake update
 lake build Toffoli.Smoke
+lake build Toffoli.Bool
 lake build Toffoli
 ```
 
@@ -35,4 +37,5 @@ configuration changes, public milestones, and final integration.
 - `toffoli-1981/`: supplied PDF, Markdown transcription, and figures.
 - `goal-1/0-plan.md`: authoritative staged plan, paper map, correction log, and dependencies.
 - `goal-1/0-loop.md`: repeatable implementation and verification protocol.
-- `goal-1/1-SOURCE-AUDIT.md`: current-stage evidence and results.
+- `goal-1/1-SOURCE-AUDIT.md`: source/setup evidence and results.
+- `goal-1/2-FINITE-CORE.md`: finite API design and verification evidence.

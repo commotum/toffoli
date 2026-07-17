@@ -1,4 +1,4 @@
-import Toffoli.Smoke
+import Toffoli.Bool
 
 /-!
 # Toffoli

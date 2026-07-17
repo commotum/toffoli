@@ -113,6 +113,10 @@ theorem deleteRight_apply (h : RightDummy f c) (x : α) (i : ι) :
     h.deleteRight x i = f x (Sum.inl i) :=
   rfl
 
+/-- Certified deletion retains enough information to reconstruct the original outputs. -/
+theorem assemble_deleteRight (h : RightDummy f c) : assembleRight h.deleteRight c = f :=
+  h.reconstruct
+
 end RightDummy
 
 end Component

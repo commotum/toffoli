@@ -65,6 +65,12 @@ theorem eval_serial (atomEval : {ι : Type u} → Atom ι → BoolPerm ι) {ι :
   rfl
 
 @[simp]
+theorem eval_serial_apply (atomEval : {ι : Type u} → Atom ι → BoolPerm ι) {ι : Type u}
+    (first second : OneToOneCircuit Atom ι) (x : BoolWord ι) :
+    eval atomEval (.serial first second) x = eval atomEval second (eval atomEval first x) :=
+  rfl
+
+@[simp]
 theorem eval_tensor (atomEval : {ι : Type u} → Atom ι → BoolPerm ι) {ι κ : Type u}
     (left : OneToOneCircuit Atom ι) (right : OneToOneCircuit Atom κ) :
     eval atomEval (.tensor left right) =

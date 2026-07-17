@@ -1,6 +1,6 @@
 # 2-FINITE-CORE
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -66,7 +66,8 @@ Freeze a low-dependency finite API that represents Boolean words/permutations, r
 
 - Every planned finite declaration has a documented owner module and builds without `sorry`, `admit`, or project axioms.
 - Reindexing and tensor laws, exact face restriction, fixed-right insertion/deletion, and semantic dummy reconstruction are proved.
-- The one-to-one derivation admits only identity, serial, reindex, tensor, and primitive steps and exposes the resulting ordinary permutation.
+- The one-to-one derivation admits only identity, primitive, bare coordinate wiring, serial,
+  tensor, and circuit-reindexing steps and exposes the resulting ordinary permutation.
 - Arity-zero word cardinality and permutation uniqueness are proved; low-arity audit examples compile.
 - Focused builds pass for every touched leaf and the audit leaf; the finite facade and necessary root adjacent target pass after promotion.
 - Project proof-hole/axiom scans, forbidden-import scans, trailing-whitespace checks, and `git diff --check` pass.
@@ -75,4 +76,32 @@ Freeze a low-dependency finite API that represents Boolean words/permutations, r
 
 ## Stage Results
 
-- Pending.
+- Representation is frozen as `BoolWord ι := ι → Bool`, `BoolVec n := BoolWord (Fin n)`,
+  `BoolPerm ι := Equiv.Perm (BoolWord ι)`, and `BoolPermN n := BoolPerm (Fin n)`.
+- `Toffoli.Bool.Defs` owns only the aliases. `Toffoli.Bool.Finite` isolates the materially heavier
+  cardinality imports and proves `card_boolWord`, `card_boolVec_zero`, arity-zero word uniqueness,
+  and `boolPermN_zero_eq_refl`.
+- `Toffoli.Bool.Reindex` defines word-space reindexing, permutation conjugation, bare coordinate
+  wiring, and identity/transitivity/serial laws. The two wiring notions have deliberately distinct
+  definitions and types.
+- `Toffoli.Component.Tensor` defines disjoint parallel composition and identity extension, with
+  pointwise and serial laws. `Toffoli.Component.OneToOne` defines the resource-free circuit syntax
+  and evaluator. `eval_serial_apply` pins the convention: the first circuit acts first.
+- `Toffoli.Component.Face` and `Toffoli.Component.Restriction` define partial-assignment faces and
+  exact source-to-target restrictions. `Toffoli.Component.Dummy` separately defines fixed-face
+  factor insertion/deletion and certificate-driven semantic dummy deletion; no arbitrary
+  projection is exported as certified deletion.
+- `Toffoli.Audit.FiniteBoundary` checks arity zero, reindexing, tensoring, face round trips, dummy
+  reconstruction, and empty-atom circuits. It is outside the public import graph.
+- The thin `Toffoli.Bool` facade imports the finite leaves only. The root `Toffoli` import was
+  promoted from the Stage 1 smoke leaf to `Toffoli.Bool` only after focused builds passed.
+- Focused builds passed on 2026-07-17: `Bool.Finite` (759 jobs, 1.4 s),
+  `Component.Restriction` (394 jobs, 1.1 s), `Component.OneToOne` (312 jobs, 1.1 s),
+  `Audit.FiniteBoundary` (766 jobs, 1.4 s), and `Toffoli.Bool` (766 jobs, 1.4 s). The final
+  pointwise-law/facade promotion was rechecked before stage closure.
+- `Toffoli.Audit.Axioms.Finite` builds and reports only Lean's standard `propext`,
+  `Classical.choice`, and `Quot.sound`; it reports no project-specific axiom. The audit leaf took
+  3.05 s for 766 jobs and remains non-public.
+- Scans found no `sorry`, `admit`, `sorryAx`, project `axiom`, `unsafe` declaration, broad
+  `import Mathlib`, manifold import, or synthesis import in the finite modules. `git diff --check`
+  passed.

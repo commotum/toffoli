@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `1-SOURCE-AUDIT` in progress.
+Status: Stage `2-FINITE-CORE` complete; Stage `3-TOFFOLI` in progress.
 
 ## Big-Picture Objective
 
@@ -46,7 +46,10 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - The PDF has 11 scan pages corresponding to printed pages 13–23. The principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3.
 - Source audit has confirmed that the binary circle operation in Lemma 4.2 is well defined but is not associative and has no multiplicative identity, contrary to the paper's “all ring axioms except distributivity” assertion. The required smooth gate can instead use the direct finite control product.
 - Printed page 21 contains two source errors in Theorem 5.2's proof: it cites Figure 4 rather than Figure 7 and writes the restriction face as `B³ × {0}` although the displayed five-wire construction fixes one wire and retains four, so it must be `B⁴ × {0}`.
-- No substantive Lean definition or paper theorem has been implemented yet; Stage 1 contains setup and source/API audit only.
+- The finite core is implemented and verified. It uses generic indexed Boolean words and finite
+  aliases, distinguishes coordinate wiring from gate conjugation, provides disjoint tensoring and
+  resource-free one-to-one circuit syntax, and separates exact face restriction, singleton-factor
+  deletion, and certificate-driven semantic dummy deletion.
 
 ## Current Assumptions to Validate
 
@@ -251,7 +254,10 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 
 - `formal/lean-toolchain` pins `leanprover/lean4:v4.32.0`.
 - `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`; `formal/lake-manifest.json` resolves the same commit.
-- `formal/Toffoli/Smoke.lean` imports only `Mathlib.Logic.Equiv.Basic`; `formal/Toffoli.lean` is currently a thin root import.
+- `formal/Toffoli/Smoke.lean` remains the Stage 1 diagnostic leaf. The thin root now imports the
+  verified `Toffoli.Bool` facade; finite internal leaves import only exact dependencies.
+- `Toffoli.Audit.Axioms.Finite` reports only `propext`, `Classical.choice`, and `Quot.sound` for
+  representative exported finite declarations and is not imported publicly.
 - Initial validation on 2026-07-17: after narrowing the smoke import, focused smoke output built in 2.02 s (309 jobs), the root output in 2.07 s (310 jobs), and a warm full build in 1.26 s (311 jobs). The first smoke attempt correctly failed on import ordering and was fixed before these successful results.
 
 ### Expected mathlib areas to investigate
@@ -339,7 +345,7 @@ Establish a source-grounded, reproducible formalization baseline before mathemat
 
 ### 2-FINITE-CORE
 
-Status: next.
+Status: complete.
 
 #### Big Picture Objective
 
