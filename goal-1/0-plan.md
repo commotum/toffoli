@@ -41,7 +41,7 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Repository-root `BUILD-PLAN.md` defines the mandatory incremental Lean build discipline for this goal.
 - The repository also contains a minimal Python/uv shell (`pyproject.toml`, `uv.lock`, and `main.py`). The Lean project is isolated under `formal/`.
 - `formal/lean-toolchain` pins Lean 4.32.0. `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`, and the generated manifest records that exact revision.
-- The Stage 1 smoke leaf imports only `Mathlib.GroupTheory.Perm.Basic`; focused, root-target, and initial full builds pass.
+- The Stage 1 smoke leaf imports only `Mathlib.Logic.Equiv.Basic`; focused, root-target, and initial full builds pass.
 - No existing `goal-*` folder was present before this scaffold, so this goal is `goal-1`.
 - The PDF has 11 scan pages corresponding to printed pages 13–23. The principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3.
 - Source audit has confirmed that the binary circle operation in Lemma 4.2 is well defined but is not associative and has no multiplicative identity, contrary to the paper's “all ring axioms except distributivity” assertion. The required smooth gate can instead use the direct finite control product.
@@ -61,6 +61,7 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - The paper explicitly uses the circle `ℝ/(2πℤ)`, embeds Boolean `0,1` as angles `0,π`, and calls the desired map a diffeomorphism. These conventions still need a precise Lean model and proof.
 - Model one-to-one composition as a constrained circuit/wiring derivation whose evaluator uses ordinary equivalence composition, rather than inventing a second incompatible notion of semantic function composition.
 - Keep canonical deletion of singleton product factors distinct from semantic deletion of Boolean outputs, which requires a constancy/dummy certificate.
+- The smooth product representation is not settled: binary product manifolds are supported directly, but the pinned source does not expose a turnkey finite-Pi manifold/diffeomorphism API. Stage 7 must choose recursive products or prove an isolated finite-Pi bridge.
 
 ## Tentative Formalization Direction
 
@@ -195,24 +196,24 @@ analytic complex Circle + Boolean embedding
                                       +--> main diffeomorphic extension theorem
 ```
 
-## Initial Paper Map
+## Paper Map
 
-The source is present under `toffoli-1981/`. Locations below are sufficient for scaffolding; Stage `1-SOURCE-AUDIT` must add PDF page coordinates, normalize exact statements, and check the transcription against the PDF.
+The source is present under `toffoli-1981/`. Printed pages below were checked against the supplied scan; declaration-level Lean links will be added as implementation proceeds.
 
 | Paper location and claim | Proposed Lean artifact | Dependency | Planned disposition |
 |---|---|---|---|
-| §2, Goal 2.1: extend an invertible `Bⁿ → Bⁿ` over some connected `M` | extension predicate and existential theorem | smooth atomic gates, decomposition | Formalize the mathematical existence statement only |
-| §2–§3: componentwise extension/restriction | typed productwise restriction and extension notions | indexed products | Reconstruct precisely |
-| §3: one-to-one composition and reindexing | typed component operations and laws | finite equivalences | Keep distinct from ordinary composition |
-| §3: deletion of singleton-valued dummy variables | reusable dummy deletion relation | product decompositions | Reconcile with fixed Boolean ancillas |
-| Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | involutive generalized Toffoli equivalence | controls/target representation | Cover `n > 0` and decide an arity-zero API separately |
-| Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | atomic flip and arbitrary-permutation decomposition | cube adjacency, Gray paths | Reconstruct exact permutation word |
-| Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | circle quotient, periodic smooth functions | Verify representative independence and inverse |
-| Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
-| Theorem 5.1: lower-order `θ` gates generate only even permutations | parity non-generation theorem | sign and dummy-coordinate extension | Re-derive, including boundary cases |
-| Theorem 5.2: `θ⁽³⁾` universality with restriction/deletion | resource-indexed closure theorem | exact Fig. 7 recursion, dummy operations | Verify construction and `2n - 3` claimed bound |
-| Theorem 5.3: smooth analogue using `Θ⁽³⁾` | qualified smooth synthesis theorem | circle gate, Theorem 5.2 | Reconstruct the proof currently stated as parallel |
-| §5 mechanisms and Appendix energy interpretation | documentation-only boundary | explicit physical model, if ever added | Exclude from verified core by default |
+| Printed pp. 14–15, Goal 2.1: extend an invertible `Bⁿ → Bⁿ` over some connected `M` | extension predicate and existential theorem | smooth atomic gates, decomposition | Formalize the mathematical existence statement only |
+| Printed pp. 15–16, §§2–3: componentwise extension/restriction | typed productwise restriction and extension notions | indexed products, explicit Boolean embedding | “Componentwise” preserves separate factors; it does not mean output `i` depends only on input `i` |
+| Printed p. 16, §3: one-to-one composition and reindexing | typed circuit/wiring derivation and evaluation laws | finite equivalences | Keep distinct from ordinary semantic composition |
+| Printed p. 16, §3: deletion of singleton-valued dummy variables | singleton deletion plus separate semantic dummy-output API | product decompositions | Do not conflate the two operations |
+| Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | involutive generalized Toffoli equivalence | controls/target representation | Cover `n > 0` and decide an arity-zero API separately |
+| Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | atomic flip and arbitrary-permutation decomposition | cube adjacency, Gray paths | Reconstruct the omitted exact word |
+| Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | analytic `Circle`, finite control product | Correct the nonassociative binary-operation presentation |
+| Printed p. 18, Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
+| Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | parity non-generation theorem | sign and dummy-coordinate lift | Re-derive, including boundary cases |
+| Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | resource-indexed closure theorem | clean-ancilla recursion, dummy operations | Correct source typos and verify the `2n - 3` bound |
+| Printed p. 21, Theorem 5.3: smooth analogue using `Θ⁽³⁾` | qualified smooth synthesis theorem | circle gate, Theorem 5.2 | Reconstruct the one-line “parallels” proof |
+| Printed pp. 18–20 mechanisms and pp. 21–23 Appendix/energy interpretation | documentation-only boundary | explicit physical model, if ever added | Exclude from verified core by default |
 
 ## Initial Correction and Unresolved-Point Log
 
@@ -220,7 +221,7 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 
 | ID | Issue to investigate | Risk | Required evidence before closure | Status |
 |---|---|---|---|---|
-| C-001 | In Lemma 4.2, is `x ∘ y = π(1-cos x)(1-cos y)/4` well defined on `ℝ/(2πℤ)`, including when iterated? | A quotient formula may depend on representatives or chosen lifts | Direct periodicity/quotient-lift proof and associativity requirements actually used | Open |
+| C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2`; document the counterexample `(π/2 ∘ π/2) ∘ π ≠ π/2 ∘ (π/2 ∘ π)` | Confirmed material correction; Lean work pending |
 | C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Open |
 | C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Open |
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Open |
@@ -234,14 +235,24 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-012 | The paper calls a manifold diffeomorphism the appropriate generalization of a bicontinuous function; where are only continuity versus smoothness actually established? | Terminology can obscure a proof obligation | Audit each result and keep homeomorphism/diffeomorphism claims separate | Open |
 | C-013 | Are component-preservation claims literal or only up to coordinate reindexing? | Composition structure may be misstated | Typed statement and source diagram audit | Open |
 | C-014 | Are physical realizability claims mathematical consequences of the extension theorem? | Category error between existence and mechanism | Keep separate absent a formal physical model | Open |
+| C-015 | Theorem 5.2's proof on printed p. 21 writes the restriction of `φ⁽⁵⁾` as `B³ × {0}` while fixing one of five wires and claiming the other four implement `θ⁽⁴⁾` | The displayed type has only four total coordinates and cannot be a face of the five-wire circuit with four retained data wires | Correct to `B⁴ × {0}` and verify the Fig. 7 circuit algebraically | Confirmed source typo; Lean work pending |
+| C-016 | Theorem 5.2's proof on printed p. 20 says “function `φ⁽⁵⁾` of Figure 4,” but the construction is Figure 7 | Incorrect cross-reference obscures the universality gadget | Cite and formalize Figure 7 | Confirmed source typo; documentation pending |
+| C-017 | Theorem 5.2 claims at most `2n-3` constant inputs for every order `n` | The bound is negative for `n=1`; for `n=2`, one fixed wire cannot realize all two-bit permutations from three-bit Toffoli and wire permutations because the three-wire generators preserve Hamming-weight strata enough to obstruct, e.g., double NOT on the face | Prove the low-arity obstruction formally; state a corrected piecewise bound or require `3 ≤ n`; prove the remaining accounting | Confirmed material correction; exact replacement pending |
+| C-018 | At the start of Lemma 4.1's proof (printed p. 17), the PDF says “By definition, `θ⁽ⁿ⁾` is a permutation” where the argument requires the arbitrary given `f⁽ⁿ⁾` | The published text names the wrong function | Retain the Markdown transcription's justified correction to `f⁽ⁿ⁾` and document it | Confirmed source typo |
+| C-019 | Literal set inclusion `M ⊇ B` and the word “componentwise” are underspecified for Lean | It can be misread as a subtype requirement or coordinatewise independence | Use an explicit injective Boolean embedding/two distinct points; define componentwise interpolation on product factors without imposing false dependency restrictions | Confirmed specification correction |
+| C-020 | Theorem 5.1's proof says every allowed proper-arity operation is even, while §3 also calls coordinate reindexing one-to-one composition | A coordinate swap on `B²` is an odd vertex permutation; the parity proof as written therefore fails at ambient arity two if free reindexings are generators | Prove the parity theorem for `n ≥ 3` with free reindexing, or treat reindexing as placement/conjugation; settle `n=0,1,2` separately | Confirmed proof gap; theorem disposition pending |
+| C-021 | Lemma 4.1 says NOTs are “applied” to selected controls to obtain all edge atoms | A zero-controlled edge requires NOT conjugation both before and after `θ⁽ⁿ⁾`, not a one-sided application | Formalize the explicit conjugation and verify the edge transposition | Open proof obligation |
+| C-022 | Theorem 5.3 says only that its proof “parallels” Theorem 5.2 | Fixing a smooth `Θ³` control at `π` gives a valid extension but not necessarily the paper's exact lower-order `Θ` away from Boolean points; the nonassociative operation also makes higher `Θ` ambiguous | State interpolation/equivalence results, not literal off-cube equality unless separately proved; reconstruct the stable-face smooth circuit | Confirmed proof gap; Lean work pending |
+| C-023 | The natural finite model uses `Fin n → Circle`, but pinned mathlib lacks a turnkey finite-Pi `IsManifold` and diffeomorphism constructor | Assuming an instance could stall the smooth layer or pull heavy infrastructure into the core | In an early Stage 7 leaf, compare recursively nested binary products with an isolated finite-Pi manifold bridge; prove equivalence to the chosen component indexing | Open design obligation |
 
 ## Dependency and Environment Notes
 
 ### Versions and project setup
 
-- No Lean version is selected yet. `1-SOURCE-AUDIT` must record the current stable Lean/mathlib compatibility options and choose a pinned pair before any library code is added.
-- The minimal future setup is expected to include `lean-toolchain`, `lakefile.toml`, `lake-manifest.json`, a root namespace under a source directory, and a smoke-test import. These files are intentionally not created during scaffolding.
-- The first setup validation must run the appropriate Lake update/build commands and record exact versions and outputs.
+- `formal/lean-toolchain` pins `leanprover/lean4:v4.32.0`.
+- `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`; `formal/lake-manifest.json` resolves the same commit.
+- `formal/Toffoli/Smoke.lean` imports only `Mathlib.Logic.Equiv.Basic`; `formal/Toffoli.lean` is currently a thin root import.
+- Initial validation on 2026-07-17: after narrowing the smoke import, focused smoke output built in 2.02 s (309 jobs), the root output in 2.07 s (310 jobs), and a warm full build in 1.26 s (311 jobs). The first smoke attempt correctly failed on import ordering and was fixed before these successful results.
 
 ### Expected mathlib areas to investigate
 
@@ -252,6 +263,18 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 - products, Pi types, and reindexing equivalences.
 - smooth manifolds, `ContMDiff`, smooth maps, Lie groups, circles/real modulo subgroups, and diffeomorphisms.
 - quotient-lift APIs if the paper's angular formula is retained.
+
+### Confirmed pinned mathlib surfaces
+
+- `Mathlib.GroupTheory.Perm.Basic`: `Equiv.Perm`, swaps, and basic permutation operations.
+- `Mathlib.GroupTheory.Perm.Sign`: `Equiv.Perm.sign`, `sign_swap`, conjugation invariance, product-congruence sign lemmas, and transposition factorization/induction.
+- `Mathlib.Logic.Equiv.Basic` and `.Prod`: Pi reindexing plus dependent/product congruences.
+- `Mathlib.Data.Fintype.Card` and `.BigOperators`: `Fintype.card_bool` and `Fintype.card_fun`.
+- `Mathlib.InformationTheory.Hamming`: Hamming distance exists, but no ready-made Gray-path decomposition was found; a narrow local cube-path construction is still expected.
+- `Mathlib.Analysis.Complex.Circle` and `Mathlib.Geometry.Manifold.Instances.Sphere`: complex unit `Circle`, analytic manifold/Lie-group instances, analytic `Circle.exp`, and the distinct Boolean points `1` and `Circle.exp π = -1`.
+- `Mathlib.Analysis.SpecialFunctions.Complex.Circle`: `AddCircle.homeomorphCircle'` relates `AddCircle (2 * π)` to complex `Circle` and sends quotient representatives to `Circle.exp`.
+- `Mathlib.Geometry.Manifold.Diffeomorph`: the smooth diffeomorphism structure and product constructions.
+- `AddCircle` has useful quotient topology, but the pinned generic quotient-manifold file explicitly leaves smoothness of quotient actions as a TODO; the complex `Circle` route is therefore preferred.
 
 ### Dependency policy
 
@@ -289,6 +312,8 @@ The original objective is complete only when all applicable conditions below hol
 
 ### 1-SOURCE-AUDIT
 
+Status: complete.
+
 #### Big Picture Objective
 
 Establish a source-grounded, reproducible formalization baseline before mathematical implementation.
@@ -314,6 +339,8 @@ Establish a source-grounded, reproducible formalization baseline before mathemat
 
 ### 2-FINITE-CORE
 
+Status: next.
+
 #### Big Picture Objective
 
 Define the finite Boolean objects and reusable component operations with precise typing and boundary behavior.
@@ -323,8 +350,9 @@ Define the finite Boolean objects and reusable component operations with precise
 - Compare `Fin n → Bool`, `Vector Bool n`, and any suitable mathlib bit-vector type against reindexing and cardinality needs; document the chosen representation.
 - Define or alias Boolean permutations using finite equivalences.
 - Implement coordinate reindexing and prove identity/composition laws.
-- Formalize ordinary composition and the paper's one-to-one component composition as distinct operations.
-- Define fixed-coordinate faces, restriction, identity/dummy extension, component dependence, and justified dummy deletion.
+- Formalize ordinary equivalence composition and a distinct one-to-one circuit/wiring derivation with an evaluator into ordinary composition.
+- Define fixed-coordinate faces, restriction, identity/dummy extension, and component dependence.
+- Keep canonical deletion of singleton factors after restriction separate from semantic deletion of Boolean outputs carrying a constancy/dummy certificate.
 - State and prove all arity-zero and low-arity behavior rather than relying on nonemptiness.
 - Keep `Bool/Core` and cheap component definitions below the heavier restriction/deletion proof leaf; do not import manifold or synthesis modules.
 
