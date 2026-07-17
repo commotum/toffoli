@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `2-FINITE-CORE` complete; Stage `3-TOFFOLI` in progress.
+Status: Stage `3-TOFFOLI` complete; Stage `4-GRAY-DECOMP` in progress.
 
 ## Big-Picture Objective
 
@@ -50,6 +50,10 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   aliases, distinguishes coordinate wiring from gate conjugation, provides disjoint tensoring and
   resource-free one-to-one circuit syntax, and separates exact face restriction, singleton-factor
   deletion, and certificate-driven semantic dummy deletion.
+- Generalized positive-control Toffoli gates are implemented as explicit involutive permutations.
+  The paper family is `AndNand.thetaSucc n : BoolPermN (n + 1)` (parameter = control count), and
+  reindexing/unused-coordinate placement agree definitionally at the specification level and by
+  proved equality at the permutation level.
 
 ## Current Assumptions to Validate
 
@@ -209,7 +213,7 @@ The source is present under `toffoli-1981/`. Printed pages below were checked ag
 | Printed pp. 15–16, §§2–3: componentwise extension/restriction | typed productwise restriction and extension notions | indexed products, explicit Boolean embedding | “Componentwise” preserves separate factors; it does not mean output `i` depends only on input `i` |
 | Printed p. 16, §3: one-to-one composition and reindexing | typed circuit/wiring derivation and evaluation laws | finite equivalences | Keep distinct from ordinary semantic composition |
 | Printed p. 16, §3: deletion of singleton-valued dummy variables | singleton deletion plus separate semantic dummy-output API | product decompositions | Do not conflate the two operations |
-| Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | involutive generalized Toffoli equivalence | controls/target representation | Cover `n > 0` and decide an arity-zero API separately |
+| Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | `ToffoliGate`, `ToffoliGate.perm`, `AndNand.thetaSucc`, component and AND/NAND lemmas | finite controls/target | Verified for every positive order; no order-zero member; `n=1,2,3` conventions checked |
 | Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | atomic flip and arbitrary-permutation decomposition | cube adjacency, Gray paths | Reconstruct the omitted exact word |
 | Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | analytic `Circle`, finite control product | Correct the nonassociative binary-operation presentation |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
@@ -229,7 +233,7 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Open |
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Open |
 | C-005 | Lemma 4.1 sketches a Gray-path endpoint exchange but gives no exact transposition word or composition direction | Informal order can yield the wrong permutation | Algebraic proof and exhaustive low-arity check | Open |
-| C-006 | Definition 4.1 assumes `n > 0`; what API and results should exist at arity `0`, and how do `n=1,2` special cases interact with later theorems? | Cardinality/parity formulas may have exceptions | Separate lemmas or uniform proof covering each | Open |
+| C-006 | Definition 4.1 assumes `n > 0`; what API and results should exist at arity `0`, and how do `n=1,2` special cases interact with later theorems? | Cardinality/parity formulas may have exceptions | Separate lemmas or uniform proof covering each | Resolved for the gate API: `thetaSucc n` has order `n+1`; no target-bearing gate exists on `Fin 0`; NOT/CNOT/three-bit cases are proved and audited. Later parity exceptions remain under C-020 |
 | C-007 | Theorem 5.1 relies on `2^(n-i)` identical copies; what is the exact sign formula for extending an `i`-ary permutation to `n` bits? | Obstruction depends on the correct exponent | Derived sign formula and checked examples | Open |
 | C-008 | Theorem 5.1 concerns lower-order AND/NAND gates, not arbitrary lower-arity permutations; what is the strongest correct generalization? | The theorem may be overgeneralized | Formalize the exact statement first, then prove any generalization separately | Open |
 | C-009 | Theorem 5.2 claims at most `2n-3` constant-input deletions; what are their values, lifetimes, cleanliness, and corresponding outputs? | Resource-free universality may be falsely inferred | Explicit Fig. 7-based recursion and counted synthesis witness | Open |
@@ -258,6 +262,9 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   verified `Toffoli.Bool` facade; finite internal leaves import only exact dependencies.
 - `Toffoli.Audit.Axioms.Finite` reports only `propext`, `Classical.choice`, and `Quot.sound` for
   representative exported finite declarations and is not imported publicly.
+- `formal/Toffoli/Gate/Toffoli.lean` has the narrow imports `Mathlib.Data.Finset.Basic` and
+  `Toffoli.Bool.Defs`; paper-family and wiring dependencies are isolated in `Gate/AndNand` and
+  `Gate/Wiring`. `Toffoli.Audit.Axioms.Gate` likewise reports only standard foundational axioms.
 - Initial validation on 2026-07-17: after narrowing the smoke import, focused smoke output built in 2.02 s (309 jobs), the root output in 2.07 s (310 jobs), and a warm full build in 1.26 s (311 jobs). The first smoke attempt correctly failed on import ordering and was fixed before these successful results.
 
 ### Expected mathlib areas to investigate
@@ -371,6 +378,8 @@ Define the finite Boolean objects and reusable component operations with precise
 - Exported core declarations have acceptable axiom audits, and the stage records the module/fanout decision and build timings if material.
 
 ### 3-TOFFOLI
+
+Status: complete.
 
 #### Big Picture Objective
 

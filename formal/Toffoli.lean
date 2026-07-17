@@ -1,4 +1,5 @@
 import Toffoli.Bool
+import Toffoli.Gate
 
 /-!
 # Toffoli

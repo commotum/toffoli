@@ -1,6 +1,6 @@
 # 3-TOFFOLI
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -31,22 +31,25 @@ coordinates reusable by decomposition, parity, and synthesis.
 
 ## Detailed Implementation Plan
 
-- Add a narrow `Toffoli.Gate.Toffoli` leaf owning the gate specification, enabled predicate, word
+- Add a narrow `Toffoli.Gate.Toffoli` leaf owning the gate specification, active predicate, word
   update, involution, and permutation packaging.
 - Prove target/control/non-control evaluation laws, exact support behavior, and the empty-control
   NOT case.
-- Define coordinate reindexing of gate specifications and prove that its permutation agrees with
-  `BoolPerm.reindex`.
-- Define placement into a disjoint left summand and prove agreement with `BoolPerm.extendRight`.
-- Add paper-order and named NOT/CNOT/three-bit specializations only after the generic leaf builds.
+- Add `Toffoli.Gate.Wiring` for coordinate reindexing and disjoint-left placement, proving agreement
+  with `BoolPerm.reindex` and `BoolPerm.extendRight`.
+- Add `Toffoli.Gate.AndNand` for paper-order and named NOT/CNOT/three-bit specializations only after
+  the generic leaf builds.
 - Put low-arity truth-table checks and edge-swap checks in `Toffoli.Audit.GateBoundary`, not in the
   public gate module.
 - Add `Toffoli.Audit.Axioms.Gate`, then expose a thin `Toffoli.Gate` facade after all leaf checks.
 
 ## Build Structure
 
-- Low-dependency public definition/proof leaf: `Toffoli/Gate/Toffoli.lean`, importing only finite
-  sets/functions and the exact Boolean reindex/tensor leaves.
+- Low-dependency public definition/proof leaf: `Toffoli/Gate/Toffoli.lean`, importing only
+  `Mathlib.Data.Finset.Basic` and `Toffoli.Bool.Defs`.
+- Paper-family leaf: `Toffoli/Gate/AndNand.lean`, adding only finite-index facts.
+- Wiring leaf: `Toffoli/Gate/Wiring.lean`, adding exact Boolean reindex/tensor dependencies without
+  making them dependencies of the gate core.
 - Diagnostic leaf: `Toffoli/Audit/GateBoundary.lean`; it is never publicly imported.
 - Diagnostic axiom leaf: `Toffoli/Audit/Axioms/Gate.lean`; it is never publicly imported.
 - Public facade: `Toffoli/Gate.lean`, imports only stable gate leaves.
@@ -82,4 +85,30 @@ coordinates reusable by decomposition, parity, and synthesis.
 
 ## Stage Results
 
-- Pending.
+- `ToffoliGate ι` stores a finite positive-control set, target, and target-not-a-control proof. The
+  specification has no `DecidableEq` parameter; equality is required only by executable `run` and
+  `perm`, avoiding an unnecessary instance choice in the mathematical data.
+- `Toffoli.Gate.Toffoli` proves control invariance under target update, `run_involutive`,
+  self-inverse permutation packaging, target/control/non-target evaluation, exact fixed-word and
+  changed-coordinate characterizations, and the AND/NAND truth convention with fixed target bits.
+- `notAt`, `cnot`, and `ccnot` expose zero-, one-, and two-control specializations with all required
+  distinctness hypotheses. The empty control conjunction is formally true.
+- `Toffoli.Gate.AndNand` defines `andNandSpec` using every non-target coordinate and
+  `AndNand.thetaSucc n : BoolPermN (n + 1)`. The parameter counts controls: `thetaSucc 0` is NOT,
+  `thetaSucc 1` is CNOT, and `thetaSucc 2` is three-bit Toffoli. `thetaSucc_active_iff` and component
+  laws pin the final-coordinate convention.
+- `Toffoli.Gate.Wiring` defines embedding-based specification mapping. `perm_map_equiv` proves it
+  equals permutation conjugation along an equivalence; `perm_inl` proves left placement equals
+  tensor extension by identity on unused right coordinates.
+- `Toffoli.Audit.GateBoundary` proves no target-bearing gate exists on `Fin 0` and uses kernel
+  `decide` checks for NOT, CNOT, all four relevant three-bit control cases, and the empty-control
+  convention. No `native_decide` or external evaluator is trusted.
+- Focused builds passed on 2026-07-17: core `Toffoli.Gate.Toffoli` (602 jobs, 2.1 s), paper family
+  and wiring together (636 jobs, 1.5 s maximum), boundary audit (639 jobs, 1.5 s), axiom audit
+  (638 jobs, 1.3 s), and facade (637 jobs, 1.3 s).
+- `Toffoli.Audit.Axioms.Gate` reports only the standard `propext`, `Classical.choice`, and
+  `Quot.sound` dependencies. Scans found no proof hole, project axiom, unsafe declaration, broad
+  umbrella import, or reverse dependency on Gray/parity/synthesis/manifold code. `git diff
+  --check` passed.
+- The thin root import was promoted once, after validation, to expose both `Toffoli.Bool` and
+  `Toffoli.Gate`; the resulting root and milestone full builds are recorded in `0-plan.md`.

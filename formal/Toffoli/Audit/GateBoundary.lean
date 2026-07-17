@@ -1,5 +1,4 @@
 import Mathlib.Data.Fin.VecNotation
-import Mathlib.Tactic.NativeDecide
 import Toffoli.Gate.AndNand
 import Toffoli.Gate.Wiring
 
@@ -19,36 +18,36 @@ example : IsEmpty (ToffoliGate (Fin 0)) :=
   ⟨fun gate => Fin.elim0 gate.target⟩
 
 example : (ToffoliGate.notAt (0 : Fin 1)).perm ![false] = ![true] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 0 ![true] = ![false] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 1 ![false, false] = ![false, false] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 1 ![true, false] = ![true, true] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 2 ![true, true, false] = ![true, true, true] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 2 ![true, false, false] = ![true, false, false] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 2 ![false, true, true] = ![false, true, true] := by
-  native_decide
+  decide
 
 example : AndNand.thetaSucc 2 ![true, true, true] = ![true, true, false] := by
-  native_decide
+  decide
 
 example : (AndNand.thetaSuccSpec 0).Active ![false] := by
-  native_decide
+  decide
 
 example : (AndNand.thetaSuccSpec 2).Active ![true, true, false] := by
-  native_decide
+  decide
 
 example : ¬(AndNand.thetaSuccSpec 2).Active ![true, false, true] := by
-  native_decide
+  decide
 
 end Toffoli.Audit

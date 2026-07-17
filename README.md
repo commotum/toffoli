@@ -12,9 +12,9 @@ realizability are outside the verified core unless a physical model is added exp
 
 ## Status
 
-Stages 1 and 2 are complete: the source/setup audit and the finite Boolean/component API build and
-have recorded axiom audits. Stage 3 is formalizing generalized Toffoli permutations; decomposition,
-parity, qualified universality, and smooth extension remain in progress.
+Stages 1 through 3 are complete: the source/setup audit, finite Boolean/component API, and
+generalized Toffoli/AND-NAND permutations build and have recorded axiom audits. Gray-code
+decomposition, parity, qualified universality, and smooth extension remain in progress.
 
 ## Lean setup
 
@@ -25,6 +25,7 @@ cd formal
 lake update
 lake build Toffoli.Smoke
 lake build Toffoli.Bool
+lake build Toffoli.Gate
 lake build Toffoli
 ```
 
@@ -39,3 +40,4 @@ configuration changes, public milestones, and final integration.
 - `goal-1/0-loop.md`: repeatable implementation and verification protocol.
 - `goal-1/1-SOURCE-AUDIT.md`: source/setup evidence and results.
 - `goal-1/2-FINITE-CORE.md`: finite API design and verification evidence.
+- `goal-1/3-TOFFOLI.md`: generalized-gate design and verification evidence.

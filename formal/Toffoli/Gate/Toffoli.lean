@@ -120,6 +120,15 @@ theorem perm_trans_self (g : ToffoliGate ι) : g.perm.trans g.perm = Equiv.refl 
   apply Equiv.ext
   exact g.run_involutive
 
+@[simp]
+theorem perm_apply_target (g : ToffoliGate ι) (x : BoolWord ι) :
+    g.perm x g.target = if g.Active x then !(x g.target) else x g.target :=
+  g.run_target x
+
+theorem perm_apply_of_ne_target (g : ToffoliGate ι) (x : BoolWord ι) {i : ι}
+    (hi : i ≠ g.target) : g.perm x i = x i :=
+  g.run_of_ne_target x hi
+
 theorem run_target_of_active (g : ToffoliGate ι) (x : BoolWord ι) (h : g.Active x) :
     g.run x g.target = !(x g.target) := by
   simp [h]
@@ -138,6 +147,17 @@ theorem run_eq_self_iff (g : ToffoliGate ι) (x : BoolWord ι) :
   · intro h
     simp [run, h]
 
+@[simp]
+theorem perm_eq_self_iff (g : ToffoliGate ι) (x : BoolWord ι) :
+    g.perm x = x ↔ ¬g.Active x :=
+  g.run_eq_self_iff x
+
+@[simp]
+theorem perm_ne_self_iff (g : ToffoliGate ι) (x : BoolWord ι) :
+    g.perm x ≠ x ↔ g.Active x := by
+  rw [ne_eq, g.perm_eq_self_iff]
+  simp
+
 theorem run_ne_iff (g : ToffoliGate ι) (x : BoolWord ι) (i : ι) :
     g.run x i ≠ x i ↔ i = g.target ∧ g.Active x := by
   by_cases hi : i = g.target
@@ -146,6 +166,10 @@ theorem run_ne_iff (g : ToffoliGate ι) (x : BoolWord ι) (i : ι) :
     · simp [g.run_target_of_active x hx, hx]
     · simp [g.run_target_of_not_active x hx, hx]
   · simp [g.run_of_ne_target x hi, hi]
+
+theorem perm_apply_ne_iff (g : ToffoliGate ι) (x : BoolWord ι) (i : ι) :
+    g.perm x i ≠ x i ↔ i = g.target ∧ g.Active x :=
+  g.run_ne_iff x i
 
 /-- With a false target, the target output is the conjunction of the controls. -/
 theorem target_false_is_and (g : ToffoliGate ι) (x : BoolWord ι) :
