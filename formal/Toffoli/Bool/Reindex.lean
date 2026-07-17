@@ -54,8 +54,8 @@ namespace BoolPerm
 variable {ι : Type u} {κ : Type v} {μ : Type w}
 
 /-- Conjugate a Boolean permutation by a coordinate reindexing. -/
-def reindex (e : ι ≃ κ) (p : BoolPerm ι) : BoolPerm κ :=
-  (BoolWord.reindex e).permCongr p
+def reindex (e : ι ≃ κ) : BoolPerm ι ≃ BoolPerm κ :=
+  (BoolWord.reindex e).permCongr
 
 @[simp]
 theorem reindex_apply (e : ι ≃ κ) (p : BoolPerm ι) (x : BoolWord κ) (k : κ) :
@@ -77,6 +77,16 @@ theorem reindex_trans (e : ι ≃ κ) (f : κ ≃ μ) (p : BoolPerm ι) :
 theorem reindex_serial (e : ι ≃ κ) (p q : BoolPerm ι) :
     reindex e (p.trans q) = (reindex e p).trans (reindex e q) := by
   exact (Equiv.permCongr_trans (BoolWord.reindex e) p q).symm
+
+/-- A bare coordinate permutation, viewed as a permutation of Boolean words. This is wiring, not
+conjugation of another gate. -/
+def coordinatePerm (e : Equiv.Perm ι) : BoolPerm ι :=
+  BoolWord.reindex e
+
+@[simp]
+theorem coordinatePerm_apply (e : Equiv.Perm ι) (x : BoolWord ι) (i : ι) :
+    coordinatePerm e x i = x (e.symm i) :=
+  rfl
 
 end BoolPerm
 

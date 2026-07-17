@@ -45,9 +45,20 @@ theorem restrictEquiv_symm_apply_val (e : α ≃ β) (source : Set α) (target :
   rfl
 
 /-- Restrict a Boolean permutation to a face that it preserves exactly. -/
+def restrictFaces {ι : Type u} (p : BoolPerm ι) (source target : Face ι)
+    (maps : ∀ x, p x ∈ target.carrier ↔ x ∈ source.carrier) : source.Points ≃ target.Points :=
+  restrictEquiv p source.carrier target.carrier maps
+
+@[simp]
+theorem restrictFaces_apply_val {ι : Type u} (p : BoolPerm ι) (source target : Face ι)
+    (maps : ∀ x, p x ∈ target.carrier ↔ x ∈ source.carrier) (x : source.Points) :
+    ↑(restrictFaces p source target maps x) = p x :=
+  rfl
+
+/-- Restrict a Boolean permutation to a face that it preserves exactly. -/
 def restrictFace {ι : Type u} (p : BoolPerm ι) (face : Face ι)
     (stable : ∀ x, p x ∈ face.carrier ↔ x ∈ face.carrier) : Equiv.Perm face.Points :=
-  restrictEquiv p face.carrier face.carrier stable
+  restrictFaces p face face stable
 
 @[simp]
 theorem restrictFace_apply_val {ι : Type u} (p : BoolPerm ι) (face : Face ι)
