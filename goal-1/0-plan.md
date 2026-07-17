@@ -266,6 +266,9 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   `Toffoli.Bool.Defs`; paper-family and wiring dependencies are isolated in `Gate/AndNand` and
   `Gate/Wiring`. `Toffoli.Audit.Axioms.Gate` likewise reports only standard foundational axioms.
 - Initial validation on 2026-07-17: after narrowing the smoke import, focused smoke output built in 2.02 s (309 jobs), the root output in 2.07 s (310 jobs), and a warm full build in 1.26 s (311 jobs). The first smoke attempt correctly failed on import ordering and was fixed before these successful results.
+- Stage 3 gate promotion on 2026-07-17: the root output built in 1.3 s (771 jobs; 2.78 s command
+  wall time), and the warm milestone full build passed in 1.51 s (772 jobs). Gate core remains a
+  602-job leaf; paper-family/wiring and diagnostics remain outside its dependency path.
 
 ### Expected mathlib areas to investigate
 

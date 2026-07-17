@@ -111,4 +111,5 @@ coordinates reusable by decomposition, parity, and synthesis.
   umbrella import, or reverse dependency on Gray/parity/synthesis/manifold code. `git diff
   --check` passed.
 - The thin root import was promoted once, after validation, to expose both `Toffoli.Bool` and
-  `Toffoli.Gate`; the resulting root and milestone full builds are recorded in `0-plan.md`.
+  `Toffoli.Gate`. The promoted root built in 1.3 s (771 jobs; command wall time 2.78 s), and the
+  warm milestone full build passed in 1.51 s (772 jobs).
