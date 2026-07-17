@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: scaffolded; no formalization stage has started.
+Status: Stage `1-SOURCE-AUDIT` in progress.
 
 ## Big-Picture Objective
 
@@ -39,11 +39,14 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 
 - The repository contains the paper as `toffoli-1981/toffoli-1981.md` and `toffoli-1981/toffoli-1981.pdf`, together with extracted figures. The Markdown identifies it as Tommaso Toffoli, *Mathematical Systems Theory* 14 (1981), 13–23.
 - Repository-root `BUILD-PLAN.md` defines the mandatory incremental Lean build discipline for this goal.
-- The repository also contains a minimal Python/uv shell (`pyproject.toml`, `uv.lock`, and `main.py`), but no Lean project yet.
-- No `lean-toolchain`, `lakefile.toml`, `lake-manifest.json`, Lean source file, or test file exists yet.
+- The repository also contains a minimal Python/uv shell (`pyproject.toml`, `uv.lock`, and `main.py`). The Lean project is isolated under `formal/`.
+- `formal/lean-toolchain` pins Lean 4.32.0. `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`, and the generated manifest records that exact revision.
+- The Stage 1 smoke leaf imports only `Mathlib.GroupTheory.Perm.Basic`; focused, root-target, and initial full builds pass.
 - No existing `goal-*` folder was present before this scaffold, so this goal is `goal-1`.
-- The paper's principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3; exact page/PDF coordinates and every subsidiary claim still need audit.
-- This scaffold creates planning documents only. It does not initialize Lake, edit the supplied paper, or begin definitions or proofs.
+- The PDF has 11 scan pages corresponding to printed pages 13–23. The principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3.
+- Source audit has confirmed that the binary circle operation in Lemma 4.2 is well defined but is not associative and has no multiplicative identity, contrary to the paper's “all ring axioms except distributivity” assertion. The required smooth gate can instead use the direct finite control product.
+- Printed page 21 contains two source errors in Theorem 5.2's proof: it cites Figure 4 rather than Figure 7 and writes the restriction face as `B³ × {0}` although the displayed five-wire construction fixes one wire and retains four, so it must be `B⁴ × {0}`.
+- No substantive Lean definition or paper theorem has been implemented yet; Stage 1 contains setup and source/API audit only.
 
 ## Current Assumptions to Validate
 
@@ -53,9 +56,11 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Atomic bit-flip permutations and transpositions can likely bridge Gray-code paths to general finite-permutation generation.
 - The lower-arity obstruction is expected to use sign/parity after extending a gate by unused coordinates; the exact exponent and all small-arity exceptions must be derived.
 - Three-bit Toffoli universality requires a precise closure operation involving componentwise restriction and deletion of dummy coordinates. Theorem 5.2 claims at most `2n - 3` constant-input deletions for an order-`n` target when composition precedes deletion; that construction and count are not yet verified.
-- The smooth-extension portion may use mathlib's manifold circle or a simpler Lie-group/quotient model, but the interpolation theorem must be related explicitly to the paper's Boolean embedding.
+- Use mathlib's complex unit `Circle` if Stage 7 validation succeeds. In the pinned version it is an analytic one-manifold and Lie group (`Mathlib.Geometry.Manifold.Instances.Sphere`), and `Circle.exp` is analytic. Angles `0,π` correspond to `1,-1`.
 - Theorem 4.1 is existential in the connected manifold `M`; it does not claim extension over every connected manifold. Any generic-manifold strengthening must be stated separately and independently justified.
 - The paper explicitly uses the circle `ℝ/(2πℤ)`, embeds Boolean `0,1` as angles `0,π`, and calls the desired map a diffeomorphism. These conventions still need a precise Lean model and proof.
+- Model one-to-one composition as a constrained circuit/wiring derivation whose evaluator uses ordinary equivalence composition, rather than inventing a second incompatible notion of semantic function composition.
+- Keep canonical deletion of singleton product factors distinct from semantic deletion of Boolean outputs, which requires a constancy/dummy certificate.
 
 ## Tentative Formalization Direction
 
@@ -71,35 +76,32 @@ This ordering is provisional. Source audit or mathlib constraints may require a 
 
 `BUILD-PLAN.md` governs all stages that add Lean code. Before each stage, the stage file must classify each proposed declaration as low-level data/API, proof-side, diagnostic/audit, fallback, or temporary scaffolding and name the smallest build targets that cover it.
 
-The tentative namespace/module layout is deliberately layered:
+The tentative namespace/module layout is deliberately layered. Heavy universal-decomposition proofs are separated from the cheap atomic-word interface so synthesis and smooth engines do not rebuild when Gray-code proofs change:
 
 ```text
 Toffoli/
-  Bool/Core.lean                 Boolean words and permutations only
-  Component/Basic.lean          reindexing and cheap component laws
-  Component/Restriction.lean    faces, restriction, dummy extension/deletion
-  Gate/Basic.lean               generalized Toffoli definitions and cheap laws
-  Cube/Gray.lean                cube adjacency and Gray paths
-  Perm/Decomposition.lean       heavy atomic-decomposition proofs
-  Perm/Audit.lean               exhaustive low-arity diagnostics
-  Parity/Basic.lean             sign of structured extensions
-  Parity/Obstruction.lean       lower-arity no-generation theorem
-  Synthesis/Closure.lean        resource-explicit closure relation
-  Synthesis/ThreeBit.lean       three-bit universality proof
-  Smooth/Circle/Basic.lean      circle model and Boolean embedding
-  Smooth/Circle/Gate.lean       smooth atomic gate construction
-  Smooth/Extension.lean         main composition/extension theorem
-  Smooth/Audit.lean             formula probes and negative checks
-  API.lean                      thin stable public re-exports
+  Bool/Defs.lean
+  Bool/Reindex.lean
+  Component/{Reindex,OneToOne,Face,Restriction,Dummy}.lean
+  Gate/{Toffoli,Wiring,Atomic}.lean
+  Cube/{Adjacency,Path}.lean
+  Perm/{AtomicWord,Transposition,Decomposition}.lean
+  Parity/{Lift,Toffoli,Obstruction}.lean
+  Synthesis/{Resources,Semantics,Gadgets,FromAtoms,ThreeBit}.lean
+  Smooth/Extension/{Defs,Compose,FromAtoms}.lean
+  Smooth/Circle/{Model,Control,Toffoli,Atoms,Extension}.lean
+  Smooth/Synthesis/{Lift,ThreeBit}.lean
+  Audit/*.lean
 ```
 
 This is a planning aid, not permission to create all modules preemptively. A stage should prefer one narrow leaf until real import or fanout pressure justifies splitting it. In particular:
 
 - finite combinatorics must not import manifold modules;
 - cheap definitions and simp lemmas stay below heavy decomposition, parity, synthesis, and smooth proofs;
-- diagnostic computations, counterexamples, and `#print axioms` probes stay in audit leaves that public modules do not import;
-- internal leaves import their exact dependencies, never `Toffoli.API`;
-- `API.lean` remains thin and changes only when a public surface is intentionally promoted;
+- diagnostic computations, counterexamples, and `#print axioms` probes stay under `Toffoli/Audit/` and are never imported by public modules;
+- internal leaves import their exact dependencies, never a public facade or `Toffoli.lean`;
+- final public facades (`Toffoli.Bool`, `Toffoli.Gate`, `Toffoli.Decomposition`, `Toffoli.Parity`, `Toffoli.Synthesis`, and `Toffoli.Smooth`) remain thin; `Toffoli.lean` is an optional umbrella only;
+- `Perm.AtomicWord` exposes the cheap decomposition witness/interface; `Perm.Decomposition` proves universality, and only tiny final glue leaves combine it with synthesis or smooth “from atoms” engines;
 - focused leaf builds and necessary adjacent-consumer builds are the default;
 - a full project build is reserved for build-configuration, public/high-fanout API, global notation/instance/simp changes, explicit milestone verification, and final integration.
 
@@ -112,12 +114,13 @@ Names below are design targets, not existing declarations. Final names should fo
 - `BoolWord (ι)` or direct use of `ι → Bool`.
 - `BoolPerm ι := Equiv.Perm (ι → Bool)`.
 - coordinate reindexing equivalences induced by `ι ≃ κ`.
-- ordinary equivalence composition, separately named one-to-one component composition, with typing that prevents accidental identification.
+- ordinary equivalence composition and a separately typed one-to-one circuit/wiring derivation, with an evaluator into ordinary composition.
 - component support/dependence predicates.
 - fixing selected input coordinates.
 - restriction to a face of a Boolean cube, including a closure condition ensuring the result is a permutation when required.
 - extension by identity/dummy coordinates.
-- deletion of dummy output coordinates, only with an explicit proof that the deleted coordinates are dummy and that the retained map has the claimed codomain.
+- canonical deletion of singleton factors after face restriction.
+- semantic deletion of Boolean outputs, only with an explicit constancy/dummy certificate; this is distinct from singleton-factor deletion.
 
 ### Gate family and decomposition
 
@@ -143,12 +146,12 @@ Names below are design targets, not existing declarations. Final names should fo
 
 - an explicit Boolean embedding into the selected circle model.
 - a predicate saying a diffeomorphism extends a finite Boolean permutation on the embedded Boolean cube.
-- validation or correction of the paper's circle-valued smooth multiplication, including representative independence.
+- a documented correction replacing the paper's nonassociative binary circle multiplication by the direct finite smooth control product.
 - a smooth component gate extending the generalized Toffoli gate.
 - smoothness and involutive inverse proof, packaged as a diffeomorphism.
 - compatibility with reindexing and one-to-one component composition.
 - construction extending an arbitrary Boolean permutation by composing atomic smooth extensions.
-- a carefully hypothesized general connected-manifold theorem, or a documented correction/counterexample if connectedness alone is insufficient.
+- the source-faithful existential circle theorem; any generic connected-manifold criterion is optional and separately hypothesized.
 
 ### Audit declarations and generated reports
 
@@ -161,22 +164,21 @@ Names below are design targets, not existing declarations. Final names should fo
 ```text
 finite indices + Boolean words
         |
-        +--> component reindexing / one-to-one composition
+        +--> component reindexing / one-to-one circuit semantics
         |
         +--> generalized Toffoli involutions
+        |            |
+        |            +--> lifted-gate sign --> lower-arity obstruction
         |
-        +--> cube adjacency + Gray paths
+        +--> cube adjacency + Gray paths --> atomic-word interface
+                         |                         |
+                         |                         +--> synthesis from atoms
+                         |                         +--> smooth extension from atoms
                          |
-                         +--> edge-transposition decomposition
+                         +--> heavy universal decomposition
                                       |
-                                      +--> arbitrary BoolPerm decomposition
-                                      |            |
-                                      |            +--> discrete universality
-                                      |            +--> smooth extension by composition
-                                      |
-                                      +--> parity of extended lower-arity gates
-                                                   |
-                                                   +--> lower-arity obstruction
+                                      +--> tiny discrete universality glue theorem
+                                      +--> tiny smooth extension glue theorem
 
 restriction + constants + dummy extension/deletion
         |
@@ -184,7 +186,7 @@ restriction + constants + dummy extension/deletion
                          |
                          +--> qualified three-bit universality
 
-circle/connected-manifold model + Boolean embedding
+analytic complex Circle + Boolean embedding
         |
         +--> well-defined smooth atomic gate diffeomorphism
                          |
