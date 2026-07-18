@@ -1,4 +1,5 @@
 import Mathlib.Data.Finset.Card
+import Mathlib.Data.Fintype.EquivFin
 import Mathlib.Logic.Relation
 import Toffoli.Gate.Atomic
 
@@ -23,27 +24,36 @@ variable {ι : Type u} [Fintype ι] [DecidableEq ι]
 def diff (x y : BoolWord ι) : Finset ι :=
   Finset.univ.filter fun i => x i ≠ y i
 
+omit [DecidableEq ι] in
 @[simp]
 theorem mem_diff (x y : BoolWord ι) (i : ι) : i ∈ x.diff y ↔ x i ≠ y i := by
+  classical
   simp [diff]
 
+omit [DecidableEq ι] in
 @[simp]
 theorem diff_self (x : BoolWord ι) : x.diff x = ∅ := by
+  classical
   ext i
   simp
 
+omit [DecidableEq ι] in
 theorem diff_comm (x y : BoolWord ι) : x.diff y = y.diff x := by
+  classical
   ext i
   simp [ne_comm]
 
+omit [DecidableEq ι] in
 @[simp]
 theorem diff_eq_empty_iff (x y : BoolWord ι) : x.diff y = ∅ ↔ x = y := by
+  classical
   constructor
   · intro h
     funext i
     by_contra hi
     have : i ∈ x.diff y := (mem_diff x y i).2 hi
-    simpa [h] using this
+    rw [h] at this
+    exact (Finset.notMem_empty i) this
   · rintro rfl
     exact diff_self x
 
@@ -71,11 +81,12 @@ abbrev GrayReachable {ι : Type u} [DecidableEq ι] :=
 
 namespace GrayReachable
 
-variable {ι : Type u} [Fintype ι] [DecidableEq ι]
+variable {ι : Type u} [Finite ι] [DecidableEq ι]
 
 /-- Every two vertices of a finite Boolean cube are connected by a Gray path. -/
 theorem all (x y : BoolWord ι) : GrayReachable x y := by
   classical
+  letI := Fintype.ofFinite ι
   induction hcard : (x.diff y).card using Nat.strong_induction_on generalizing x with
   | h n ih =>
       by_cases hxy : x = y
