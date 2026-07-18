@@ -1,6 +1,6 @@
 # 4-GRAY-DECOMP
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -12,14 +12,21 @@ Status: in progress.
 - The paper omits the exact palindromic edge-swap word. A correct path
   `v₀,v₁,...,vₖ` exchanges the endpoints with
   `s₀; s₁; ...; sₖ₋₁; sₖ₋₂; ...; s₀`, where `sᵢ` swaps `vᵢ,vᵢ₊₁` and semicolon means first-then-second.
+- `Cube.Basic` now owns cheap bit flips, masked componentwise NOTs, and adjacency. `Cube.Path`
+  proves connectivity by induction on the finite difference-set cardinality without importing the
+  generalized gate family.
+- `IsEndpointWord` records the exact recursive palindrome, and `AtomicWord.eval` makes list-head-
+  first serial order part of the public theorem statement.
 
 ## Updated Assumptions
 
 - Define an atomic Boolean edge permutation as the literal swap of a word and that word with one
   target bit flipped. This makes support and involution cheap and gives Gray decomposition a stable
   interface independent of gate synthesis.
-- Construct a canonical path by flipping the finite set of coordinates on which two words differ,
-  in an explicit duplicate-free order. Prove only the path invariants consumed by the endpoint word.
+- Construct the needed path by decreasing the finite set of differing coordinates. A canonical
+  ordered vertex list and a no-duplication theorem were not added because neither is consumed by
+  endpoint transposition or arbitrary-permutation decomposition; this keeps the public dependency
+  surface smaller under `BUILD-PLAN.md`.
 - Keep the cheap atomic-word witness/interface below heavy permutation factorization. Executable
   low-arity checks stay in audit leaves.
 
@@ -82,4 +89,22 @@ standard all-other-controls Toffoli gate to one such atom.
 
 ## Stage Results
 
-- Pending.
+- Added `Toffoli.Cube.Basic`, `Toffoli.Cube.Path`, `Toffoli.Gate.Atomic`,
+  `Toffoli.Perm.AtomicWord`, and the heavy leaf `Toffoli.Perm.Decomposition`.
+- `atomicEdge x target` is the literal swap of `x` and `x.flipAt target`; endpoint, support,
+  involution, orientation, and adjacency laws are proved.
+- `IsEndpointWord.eval_eq_swap` verifies the exact palindrome. `AtomicWord.exists_eval_eq` then
+  uses `Equiv.Perm.swap_induction_on` to decompose every finite Boolean permutation, with list
+  entries acting from left to right. The chosen `AtomicWord.decompose` has correctness theorem
+  `eval_decompose`.
+- C-021 is resolved by `edgeNormalizer_permCongr_atomicEdge` and
+  `atomicEdge_eq_edgeNormalizer_permCongr_andNand`: arbitrary zero/one-pattern atoms require the
+  same componentwise NOT mask both before and after the canonical AND/NAND atom.
+- `Toffoli.Audit.GrayBoundary` checks arity zero, one-bit atoms, and every input to the explicit
+  two-bit palindrome `00 → 10 → 11`; it also instantiates the general theorem at arities one and
+  two.
+- Focused builds passed. The promoted facade/root/audit build passed with 943 jobs, and the warm
+  milestone `lake build` passed with 940 jobs in 1.41 s. Separating `Cube.Basic` reduced the cheap
+  cube leaf to 314 jobs; only `Perm.Decomposition` imports `Mathlib.GroupTheory.Perm.Sign`.
+- `Toffoli.Audit.Axioms.Decomposition` reports only `propext`, `Classical.choice`, and
+  `Quot.sound`. Placeholder, broad-import, and whitespace scans passed.

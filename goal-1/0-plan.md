@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `3-TOFFOLI` complete; Stage `4-GRAY-DECOMP` in progress.
+Status: Stage `4-GRAY-DECOMP` complete; Stage `5-PARITY` in progress.
 
 ## Big-Picture Objective
 
@@ -54,6 +54,10 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   The paper family is `AndNand.thetaSucc n : BoolPermN (n + 1)` (parameter = control count), and
   reindexing/unused-coordinate placement agree definitionally at the specification level and by
   proved equality at the permutation level.
+- Exact Gray decomposition is implemented. Atomic instructions are literal cube-edge swaps,
+  endpoint transpositions use a checked recursive palindrome in documented left-to-right order,
+  and `AtomicWord.exists_eval_eq` decomposes every finite Boolean permutation. Arbitrary edge
+  patterns are related to the AND/NAND family by proved two-sided masked-NOT conjugation.
 
 ## Current Assumptions to Validate
 
@@ -214,7 +218,7 @@ The source is present under `toffoli-1981/`. Printed pages below were checked ag
 | Printed p. 16, §3: one-to-one composition and reindexing | typed circuit/wiring derivation and evaluation laws | finite equivalences | Keep distinct from ordinary semantic composition |
 | Printed p. 16, §3: deletion of singleton-valued dummy variables | singleton deletion plus separate semantic dummy-output API | product decompositions | Do not conflate the two operations |
 | Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | `ToffoliGate`, `ToffoliGate.perm`, `AndNand.thetaSucc`, component and AND/NAND lemmas | finite controls/target | Verified for every positive order; no order-zero member; `n=1,2,3` conventions checked |
-| Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | atomic flip and arbitrary-permutation decomposition | cube adjacency, Gray paths | Reconstruct the omitted exact word |
+| Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | `atomicEdge`, `IsEndpointWord.eval_eq_swap`, `AtomicWord.exists_eval_eq`, masked-NOT conjugation theorems | cube adjacency, finite permutation induction | Verified with an explicit recursive palindrome and corrected two-sided conjugation |
 | Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | analytic `Circle`, finite control product | Correct the nonassociative binary-operation presentation |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
 | Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | parity non-generation theorem | sign and dummy-coordinate lift | Re-derive, including boundary cases |
@@ -232,7 +236,7 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Open |
 | C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Open |
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Open |
-| C-005 | Lemma 4.1 sketches a Gray-path endpoint exchange but gives no exact transposition word or composition direction | Informal order can yield the wrong permutation | Algebraic proof and exhaustive low-arity check | Open |
+| C-005 | Lemma 4.1 sketches a Gray-path endpoint exchange but gives no exact transposition word or composition direction | Informal order can yield the wrong permutation | Algebraic proof and exhaustive low-arity check | Resolved: `IsEndpointWord` records the exact palindrome, `eval_eq_swap` proves it, and the two-bit direction audit covers every input |
 | C-006 | Definition 4.1 assumes `n > 0`; what API and results should exist at arity `0`, and how do `n=1,2` special cases interact with later theorems? | Cardinality/parity formulas may have exceptions | Separate lemmas or uniform proof covering each | Resolved for the gate API: `thetaSucc n` has order `n+1`; no target-bearing gate exists on `Fin 0`; NOT/CNOT/three-bit cases are proved and audited. Later parity exceptions remain under C-020 |
 | C-007 | Theorem 5.1 relies on `2^(n-i)` identical copies; what is the exact sign formula for extending an `i`-ary permutation to `n` bits? | Obstruction depends on the correct exponent | Derived sign formula and checked examples | Open |
 | C-008 | Theorem 5.1 concerns lower-order AND/NAND gates, not arbitrary lower-arity permutations; what is the strongest correct generalization? | The theorem may be overgeneralized | Formalize the exact statement first, then prove any generalization separately | Open |
@@ -248,7 +252,7 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-018 | At the start of Lemma 4.1's proof (printed p. 17), the PDF says “By definition, `θ⁽ⁿ⁾` is a permutation” where the argument requires the arbitrary given `f⁽ⁿ⁾` | The published text names the wrong function | Retain the Markdown transcription's justified correction to `f⁽ⁿ⁾` and document it | Confirmed source typo |
 | C-019 | Literal set inclusion `M ⊇ B` and the word “componentwise” are underspecified for Lean | It can be misread as a subtype requirement or coordinatewise independence | Use an explicit injective Boolean embedding/two distinct points; define componentwise interpolation on product factors without imposing false dependency restrictions | Confirmed specification correction |
 | C-020 | Theorem 5.1's proof says every allowed proper-arity operation is even, while §3 also calls coordinate reindexing one-to-one composition | A coordinate swap on `B²` is an odd vertex permutation; the parity proof as written therefore fails at ambient arity two if free reindexings are generators | Prove the parity theorem for `n ≥ 3` with free reindexing, or treat reindexing as placement/conjugation; settle `n=0,1,2` separately | Confirmed proof gap; theorem disposition pending |
-| C-021 | Lemma 4.1 says NOTs are “applied” to selected controls to obtain all edge atoms | A zero-controlled edge requires NOT conjugation both before and after `θ⁽ⁿ⁾`, not a one-sided application | Formalize the explicit conjugation and verify the edge transposition | Open proof obligation |
+| C-021 | Lemma 4.1 says NOTs are “applied” to selected controls to obtain all edge atoms | A zero-controlled edge requires NOT conjugation both before and after `θ⁽ⁿ⁾`, not a one-sided application | Formalize the explicit conjugation and verify the edge transposition | Resolved by `edgeNormalizer_permCongr_atomicEdge` and its converse: the same masked NOT occurs before and after |
 | C-022 | Theorem 5.3 says only that its proof “parallels” Theorem 5.2 | Fixing a smooth `Θ³` control at `π` gives a valid extension but not necessarily the paper's exact lower-order `Θ` away from Boolean points; the nonassociative operation also makes higher `Θ` ambiguous | State interpolation/equivalence results, not literal off-cube equality unless separately proved; reconstruct the stable-face smooth circuit | Confirmed proof gap; Lean work pending |
 | C-023 | The natural finite model uses `Fin n → Circle`, but pinned mathlib lacks a turnkey finite-Pi `IsManifold` and diffeomorphism constructor | Assuming an instance could stall the smooth layer or pull heavy infrastructure into the core | In an early Stage 7 leaf, compare recursively nested binary products with an isolated finite-Pi manifold bridge; prove equivalence to the chosen component indexing | Open design obligation |
 
@@ -269,6 +273,11 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 - Stage 3 gate promotion on 2026-07-17: the root output built in 1.3 s (771 jobs; 2.78 s command
   wall time), and the warm milestone full build passed in 1.51 s (772 jobs). Gate core remains a
   602-job leaf; paper-family/wiring and diagnostics remain outside its dependency path.
+- Stage 4 decomposition promotion on 2026-07-17: cheap cube primitives were split into the
+  314-job `Cube.Basic` leaf, while finite-group sign/induction stays exclusively in the 912-job
+  `Perm.Decomposition` heavy leaf. The facade/root/audit build passed (943 jobs), the warm full
+  build passed in 1.41 s (940 jobs), and the decomposition axiom audit contains only standard
+  foundations.
 
 ### Expected mathlib areas to investigate
 
@@ -405,6 +414,8 @@ Formalize generalized Toffoli/AND/NAND permutations and their component semantic
 - Focused gate-leaf and adjacent-consumer builds plus axiom checks pass; a full build is required only if the public API or a high-fanout dependency changed.
 
 ### 4-GRAY-DECOMP
+
+Status: complete.
 
 #### Big Picture Objective
 

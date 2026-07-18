@@ -86,10 +86,20 @@ def edgeNormalizer (base : BoolWord ι) : BoolWord ι ≃ BoolWord ι :=
   flipMaskEquiv fun i => !(base i)
 
 @[simp]
+theorem edgeNormalizer_symm (base : BoolWord ι) :
+    (edgeNormalizer base).symm = edgeNormalizer base :=
+  rfl
+
+@[simp]
 theorem edgeNormalizer_apply_base (base : BoolWord ι) :
     edgeNormalizer base base = (fun _ => true) := by
   funext i
   cases hi : base i <;> simp [edgeNormalizer, flipMaskEquiv, flipMask, hi]
+
+@[simp]
+theorem edgeNormalizer_apply_allTrue (base : BoolWord ι) :
+    edgeNormalizer base (fun _ => true) = base := by
+  simpa using (edgeNormalizer base).symm_apply_apply base
 
 @[simp]
 theorem edgeNormalizer_apply_flipAt [DecidableEq ι] (base : BoolWord ι) (target : ι) :
@@ -102,6 +112,13 @@ theorem edgeNormalizer_apply_flipAt [DecidableEq ι] (base : BoolWord ι) (targe
       simp [edgeNormalizer, flipMaskEquiv, flipMask, flipAt, hbase]
   · cases hbase : base i <;>
       simp [edgeNormalizer, flipMaskEquiv, flipMask, flipAt, hi, hbase]
+
+@[simp]
+theorem edgeNormalizer_apply_allTrue_flipAt [DecidableEq ι]
+    (base : BoolWord ι) (target : ι) :
+    edgeNormalizer base (BoolWord.flipAt (fun _ : ι => true) target) =
+      base.flipAt target := by
+  simpa using (edgeNormalizer base).symm_apply_apply (base.flipAt target)
 
 end BoolWord
 

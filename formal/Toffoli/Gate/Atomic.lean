@@ -135,9 +135,9 @@ before and after it. -/
 theorem atomicEdge_eq_edgeNormalizer_permCongr_andNand (base : BoolWord ι) (target : ι) :
     atomicEdge base target =
       (BoolWord.edgeNormalizer base).permCongr (andNand target) := by
-  have h := congrArg ((BoolWord.edgeNormalizer base).permCongr)
-    (edgeNormalizer_permCongr_atomicEdge base target)
-  simpa using h
+  simp only [andNand_eq_atomicEdge, atomicEdge, Equiv.permCongr_def,
+    Equiv.symm_trans_swap_trans, BoolWord.edgeNormalizer_apply_allTrue,
+    BoolWord.edgeNormalizer_apply_allTrue_flipAt]
 
 end ToffoliGate
 
