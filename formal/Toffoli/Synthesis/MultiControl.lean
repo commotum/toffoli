@@ -1,5 +1,6 @@
 import Mathlib.Data.List.OfFn
 import Toffoli.Circuit.ThreeBit
+import Toffoli.Cube.Basic
 import Toffoli.Synthesis.FaceRealization
 import Toffoli.Synthesis.Resources
 
@@ -200,17 +201,182 @@ theorem prefixInstruction_apply_target_of_invariant (k : ℕ) (x : BoolVec (k + 
       rw [ThreeBitInstruction.perm_apply_target]
       simp only [prefixInstruction, Fin.cases_zero, firstPrefix_control₁,
         firstPrefix_control₂, firstPrefix_target]
-      rw [h.data_eq, h.data_eq, h.fresh_eq _ (Nat.le_refl 0), prefixTrue_zero_iff]
-      by_cases hzero : x 0 = true <;> by_cases hone : x 1 = true <;> simp [hzero, hone]
+      rw [h.data_eq, h.data_eq]
+      have hwork : state (workIndex ⟨0, by omega⟩) = false :=
+        h.fresh_eq ⟨0, by omega⟩ (Nat.le_refl 0)
+      rw [hwork]
+      by_cases hzero : x 0 = true <;> by_cases hone : x 1 = true <;>
+        simp [prefixTrue_zero_iff, hzero, hone]
   | succ i =>
       rw [← prefixInstruction_target]
       rw [ThreeBitInstruction.perm_apply_target]
       simp only [prefixInstruction, Fin.cases_succ, nextPrefix_control₁,
         nextPrefix_control₂, nextPrefix_target]
-      rw [h.computed_eq i.castSucc (by simp), h.data_eq,
-        h.fresh_eq _ (Nat.le_refl (i.val + 1)), prefixTrue_succ_iff]
+      rw [h.computed_eq i.castSucc (by simp), h.data_eq]
+      have hwork : state (workIndex i.succ) = false :=
+        h.fresh_eq i.succ (Nat.le_refl (i.val + 1))
+      rw [hwork]
       by_cases hprefix : PrefixTrue k x i.castSucc <;>
-        by_cases hnext : x ⟨i + 2, by omega⟩ = true <;> simp [hprefix, hnext]
+        by_cases hnext : x ⟨i + 2, by omega⟩ = true <;>
+          simp [prefixTrue_succ_iff, hprefix, hnext]
+
+theorem prefixInvariant_step (k r : ℕ) (hr : r < k + 1) (x : BoolVec (k + 4))
+    (state : BoolWord (UniversalIndex (k + 4))) (h : PrefixInvariant k r x state) :
+    PrefixInvariant k (r + 1) x
+      ((prefixInstruction k ⟨r, hr⟩).perm state) := by
+  let current : Fin (k + 1) := ⟨r, hr⟩
+  constructor
+  · intro i
+    rw [(prefixInstruction k current).perm_apply_of_ne_target]
+    · exact h.data_eq i
+    · rw [prefixInstruction_target]
+      simp [dataIndex, workIndex]
+  · intro i
+    rw [(prefixInstruction k current).perm_apply_of_ne_target]
+    · exact h.enable_eq i
+    · rw [prefixInstruction_target]
+      simp [enableIndex, workIndex]
+  · intro i hi
+    by_cases hold : i.val < r
+    · rw [(prefixInstruction k current).perm_apply_of_ne_target]
+      · exact h.computed_eq i hold
+      · rw [prefixInstruction_target]
+        intro heq
+        have := congrArg Fin.val (show i = current from by
+          simpa [workIndex] using heq)
+        simp [current] at this
+        omega
+    · have hval : i.val = r := by omega
+      have hieq : i = current := Fin.ext hval
+      subst i
+      exact prefixInstruction_apply_target_of_invariant k x state current (by
+        simpa [current] using h)
+  · intro i hi
+    rw [(prefixInstruction k current).perm_apply_of_ne_target]
+    · exact h.fresh_eq i (by omega)
+    · rw [prefixInstruction_target]
+      intro heq
+      have := congrArg Fin.val (show i = current from by
+        simpa [workIndex] using heq)
+      simp [current] at this
+      omega
+
+theorem eval_computePrefix_invariant (k r : ℕ) (hr : r ≤ k + 1)
+    (x : BoolVec (k + 4)) :
+    PrefixInvariant k r x (ThreeBitCircuit.eval (computePrefix k r hr) (inputState x)) := by
+  induction r with
+  | zero =>
+      constructor
+      · intro i
+        rfl
+      · intro i
+        rfl
+      · intro i hi
+        omega
+      · intro i hi
+        rfl
+  | succ r ih =>
+      rw [computePrefix_succ, ThreeBitCircuit.eval_append]
+      change PrefixInvariant k (r + 1) x
+        ((prefixInstruction k ⟨r, by omega⟩).perm
+          (ThreeBitCircuit.eval
+            (computePrefix k r (Nat.le_trans (Nat.le_succ r) hr)) (inputState x)))
+      exact prefixInvariant_step k r (by omega) x _
+        (ih (Nat.le_trans (Nat.le_succ r) hr))
+
+theorem computeWord_eq_computePrefix (k : ℕ) :
+    computeWord k = computePrefix k (k + 1) (Nat.le_refl _) := by
+  unfold computeWord computePrefix
+  rw [List.ofFn_inj]
+
+theorem eval_computeWord_invariant (k : ℕ) (x : BoolVec (k + 4)) :
+    PrefixInvariant k (k + 1) x (ThreeBitCircuit.eval (computeWord k) (inputState x)) := by
+  rw [computeWord_eq_computePrefix]
+  exact eval_computePrefix_invariant k (k + 1) (Nat.le_refl _) x
+
+/-- A placed instruction commutes with a NOT on a coordinate that is neither a control nor its
+target. -/
+theorem instruction_perm_flipAt (g : ThreeBitInstruction (UniversalIndex (k + 4)))
+    (target : UniversalIndex (k + 4)) (ht : target ≠ g.target)
+    (hc₁ : target ≠ g.control₁) (hc₂ : target ≠ g.control₂)
+    (state : BoolWord (UniversalIndex (k + 4))) :
+    g.perm (state.flipAt target) = (g.perm state).flipAt target := by
+  funext i
+  by_cases hit : i = g.target
+  · subst i
+    rw [g.perm_apply_target, BoolWord.flipAt_apply_of_ne _ (Ne.symm ht)]
+    rw [BoolWord.flipAt_apply_of_ne _ (Ne.symm hc₁),
+      BoolWord.flipAt_apply_of_ne _ (Ne.symm hc₂)]
+    rw [BoolWord.flipAt_apply_of_ne _ (Ne.symm ht), g.perm_apply_target]
+  · rw [g.perm_apply_of_ne_target _ hit]
+    by_cases hi : i = target
+    · subst i
+      rw [BoolWord.flipAt_apply_self, BoolWord.flipAt_apply_self]
+      rw [g.perm_apply_of_ne_target _ ht]
+    · rw [BoolWord.flipAt_apply_of_ne _ hi, BoolWord.flipAt_apply_of_ne _ hi]
+      exact (g.perm_apply_of_ne_target state hit).symm
+
+/-- A circuit word commutes with a NOT coordinate avoided by every instruction. -/
+theorem eval_flipAt_of_avoids (instructions : List (ThreeBitInstruction (UniversalIndex (k + 4))))
+    (target : UniversalIndex (k + 4))
+    (havoid : ∀ g ∈ instructions,
+      target ≠ g.target ∧ target ≠ g.control₁ ∧ target ≠ g.control₂)
+    (state : BoolWord (UniversalIndex (k + 4))) :
+    ThreeBitCircuit.eval instructions (state.flipAt target) =
+      (ThreeBitCircuit.eval instructions state).flipAt target := by
+  induction instructions generalizing state with
+  | nil => rfl
+  | cons g instructions ih =>
+      rw [ThreeBitCircuit.eval_cons_apply]
+      obtain ⟨ht, hc₁, hc₂⟩ := havoid g (by simp)
+      rw [instruction_perm_flipAt g target ht hc₁ hc₂]
+      have htail : ∀ next ∈ instructions,
+          target ≠ next.target ∧ target ≠ next.control₁ ∧ target ≠ next.control₂ := by
+        intro next hnext
+        exact havoid next (by simp [hnext])
+      rw [ih htail]
+      rfl
+
+theorem prefixInstruction_avoids_final (k : ℕ) (i : Fin (k + 1)) :
+    let target := dataIndex (Fin.last (k + 3))
+    target ≠ (prefixInstruction k i).target ∧
+      target ≠ (prefixInstruction k i).control₁ ∧
+      target ≠ (prefixInstruction k i).control₂ := by
+  cases i using Fin.cases with
+  | zero =>
+      simp only [prefixInstruction, Fin.cases_zero, firstPrefix_target, firstPrefix_control₁,
+        firstPrefix_control₂]
+      constructor
+      · simp [dataIndex, workIndex]
+      constructor
+      · simp only [dataIndex, ne_eq, Sum.inl.injEq]
+        intro h
+        have := congrArg Fin.val h
+        simp at this
+      · simp only [dataIndex, ne_eq, Sum.inl.injEq]
+        intro h
+        have := congrArg Fin.val h
+        simp at this
+  | succ i =>
+      simp only [prefixInstruction, Fin.cases_succ, nextPrefix_target, nextPrefix_control₁,
+        nextPrefix_control₂]
+      constructor
+      · simp [dataIndex, workIndex]
+      constructor
+      · simp [dataIndex, workIndex]
+      · simp only [dataIndex, ne_eq, Sum.inl.injEq]
+        intro h
+        have := congrArg Fin.val h
+        simp at this
+        omega
+
+theorem computeWord_avoids_final (k : ℕ) (g : ThreeBitInstruction (UniversalIndex (k + 4)))
+    (hg : g ∈ computeWord k) :
+    let target := dataIndex (Fin.last (k + 3))
+    target ≠ g.target ∧ target ≠ g.control₁ ∧ target ≠ g.control₂ := by
+  rw [computeWord, List.mem_ofFn] at hg
+  obtain ⟨i, rfl⟩ := hg
+  exact prefixInstruction_avoids_final k i
 
 /-- The all-arity clean circuit word.  Arity zero is deliberately the empty identity word. -/
 def word : (n : ℕ) → List (ThreeBitInstruction (UniversalIndex n))

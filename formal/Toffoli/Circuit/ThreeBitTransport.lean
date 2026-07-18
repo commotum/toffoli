@@ -49,6 +49,28 @@ theorem perm_reindex (e : ι ≃ κ) (gate : ThreeBitInstruction ι) :
 
 end ThreeBitInstruction
 
+namespace ToffoliGate
+
+variable {ι : Type u} {κ : Type v}
+variable [Fintype ι] [Fintype κ] [DecidableEq ι] [DecidableEq κ]
+
+/-- Reindexing an all-positive-control AND/NAND gate sends its target along the coordinate
+equivalence. -/
+theorem reindex_andNand (e : ι ≃ κ) (target : ι) :
+    BoolPerm.reindex e (andNand target) = andNand (e target) := by
+  have hgate :
+      (andNandSpec target).map e.toEmbedding = andNandSpec (e target) := by
+    unfold andNandSpec ToffoliGate.map
+    rw [ToffoliGate.mk.injEq]
+    constructor
+    · ext coordinate
+      simp
+    · rfl
+  rw [andNand, ← perm_map_equiv]
+  exact congrArg ToffoliGate.perm hgate
+
+end ToffoliGate
+
 namespace ThreeBitCircuit
 
 variable {ι : Type u} {κ : Type v}
