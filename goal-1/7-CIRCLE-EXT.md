@@ -1,6 +1,6 @@
 # 7-CIRCLE-EXT
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -98,4 +98,45 @@ component preservation, and interpolation for every positive gate order includin
 
 ## Stage Results
 
-- Pending final facade and boundary validation.
+### Recursive model and corrected formula
+
+- `CircleExtension.ManifoldSpace.circlePower` packages a singleton zero-fold product and
+  right-nested binary products of complex unit circles.  It uses only manifold instances present
+  in the pinned mathlib version and assumes no finite-Pi manifold API.
+- `boolPoint`, `embed`, `coord`, and `embed_injective` implement the convention
+  `false ↦ Circle.exp 0 = 1` and `true ↦ Circle.exp π = -1` and prove that the Boolean cube
+  embeds injectively.
+- `signal z = (1-re z)/2` is defined on the circle point itself, so representative independence is
+  built in.  `signal_exp` proves that its angular pullback is exactly `(1-cos x)/2`.
+- `controlProduct` is the corrected direct finite selector product, with empty product `1`.
+  `contMDiff_controlProduct`, `controlProduct_eq_prod_signal`, and `controlProduct_embed` prove
+  smoothness, its finite-product meaning, and the exact Boolean conjunction semantics.  The
+  paper's nonassociative/unital binary-operation claim is not used.
+
+### Smooth gate and interpolation
+
+- `gate n` updates only the last target by
+  `z⁻¹ * Circle.exp (π * controlProduct controls)`.  `gate_controls` and the coordinate laws
+  prove component preservation.
+- `gate_involutive`, `contMDiff_gate`, `gate_bijective`, and `gateDiffeomorph` prove the full
+  inverse, smoothness, bijectivity, and diffeomorphism obligations separately.
+- `gate_interpolates_thetaSucc` and its diffeomorphism-level wrapper prove exact equality with
+  `AndNand.thetaSucc` after the Boolean embedding for every control count.  In particular, zero
+  controls gives the one-bit NOT gate.
+
+### Verification and dependency boundary
+
+- `Toffoli.Audit.CircleBoundary` checks the singleton empty product, empty control product, both
+  Boolean angle/signal conventions, NOT at both Boolean values, controls-first/final-target order,
+  and the generic interpolation signature.
+- Focused model/gate build passed through 2531 jobs; the new thin `Toffoli.Smooth` facade and
+  boundary audit passed through 2533 jobs; the axiom audit passed through 2532 jobs.  The root
+  `Toffoli.lean` was deliberately not changed, so ordinary discrete root builds remain on the
+  962-job path until the main smooth theorem is integrated.
+- `Toffoli.Audit.Axioms.Circle` reports only `propext`, `Classical.choice`, and `Quot.sound` for the
+  embedding, direct product, smoothness, inverse, diffeomorphism, and interpolation results.
+  Proof-hole/project-axiom/unsafe scans, reverse-import checks, warning review, and
+  `git diff --check` pass.
+- Corrections C-001, C-002, C-003, and the recursive-product choice C-023 are now backed by Lean
+  declarations.  Arbitrary-coordinate atomic diffeomorphisms and the main extension fold remain
+  explicitly assigned to Stage 8.

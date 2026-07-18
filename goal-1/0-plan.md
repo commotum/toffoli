@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `6-UNIVERSALITY` complete; Stage `7-CIRCLE-EXT` in progress.
+Status: Stage `7-CIRCLE-EXT` complete; Stage `8-MANIFOLD-EXT` in progress.
 
 ## Big-Picture Objective
 
@@ -69,11 +69,13 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   requested permutation.  The exact auxiliary count is two for `n ≤ 3` and `n-1` for `n ≥ 3`;
   the paper's `2n-3` bound is proved only for `n ≥ 3`, with a separate no-auxiliary arity-zero
   theorem and a structural one-auxiliary obstruction at two data bits.
-- The foundational explicit circle gate is implemented in isolated smooth leaves.  It uses
+- The explicit circle gate is implemented and publicly exposed through an isolated smooth facade.
+  It uses
   recursive binary products of complex `Circle`, embeds Boolean `false,true` as `1,-1`, replaces
   the paper's ambiguous iterated binary operation by a direct finite selector product, and proves
   smoothness, involution, diffeomorphism packaging, component preservation, and exact AND/NAND
-  interpolation.  Stage 7 integration/documentation remains in progress.
+  interpolation, including the zero-control NOT case.  Arbitrary atomic-coordinate extension and
+  the main finite-permutation fold remain Stage 8 work.
 
 ## Current Assumptions to Validate
 
@@ -310,10 +312,10 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   permutation decomposition.  The public synthesis facade built with 933 jobs; the
   facade/root/audit milestone passed with 964 jobs and the warm finite-block full build with 962
   jobs.  Representative main results use only `propext`, `Classical.choice`, and `Quot.sound`.
-- Stage 7 foundational circle work on 2026-07-17 remains non-public while the stage is in
-  progress. `CircleModel`, `CircleGate`, and their axiom audit built together through 2532 jobs;
-  model/gate focused targets took about 3.1 s each.  No smooth import flows back into the finite or
-  synthesis graph.
+- Stage 7 circle promotion on 2026-07-17 exposes a thin `Toffoli.Smooth` facade without adding it
+  to the root discrete umbrella. `CircleModel`/`CircleGate` built through 2531 jobs, the
+  facade/boundary audit through 2533, and the axiom audit through 2532.  No smooth import flows
+  back into the finite or synthesis graph.
 
 ### Expected mathlib areas to investigate
 
@@ -527,7 +529,7 @@ Prove the exact qualified universality of the three-bit Toffoli gate and account
 
 ### 7-CIRCLE-EXT
 
-Status: in progress.
+Status: complete.
 
 #### Big Picture Objective
 
@@ -553,6 +555,8 @@ Validate and formalize the explicit circle-valued smooth extension, or replace i
 - Focused circle/basic, gate, and necessary adjacent-consumer builds plus axiom audit pass; no finite module is rebuilt through a reverse smooth import.
 
 ### 8-MANIFOLD-EXT
+
+Status: in progress.
 
 #### Big Picture Objective
 
