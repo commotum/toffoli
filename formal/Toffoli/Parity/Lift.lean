@@ -49,7 +49,7 @@ theorem sign_extendRight_of_nonempty [Fintype ι] [DecidableEq ι]
     [Fintype κ] [DecidableEq κ] [Nonempty κ] (p : BoolPerm ι) :
     Equiv.Perm.sign (extendRight p κ) = 1 := by
   rw [sign_extendRight_eq_pow_two, Int.units_pow_eq_pow_mod_two]
-  obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero (Fintype.card_ne_zero)
+  obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero (Fintype.card_ne_zero (α := κ))
   simp [hm, pow_succ]
 
 end BoolPerm
