@@ -1,0 +1,110 @@
+import Toffoli.Smooth.CircleAtomic
+import Toffoli.Smooth.Synthesis.AtomicStability
+import Toffoli.Smooth.UniversalFace
+import Toffoli.Synthesis.Universality
+
+/-!
+# Qualified smooth universality of the three-bit Toffoli gate
+
+This deliberately heavy terminal leaf combines the chosen finite atomic decomposition with the
+explicit three-bit synthesis compiler.  The nested discrete word is flattened into consecutive
+circle coordinates and interpreted as a composition of placed copies of `gateDiffeomorph 2`.
+Its two enable coordinates and all work coordinates are preserved for every circle-valued
+ambient input.  Restriction to their fixed Boolean values therefore produces a data
+diffeomorphism interpolating the requested Boolean permutation.
+
+This is a qualified result: it uses fixed constants, returned clean auxiliaries, componentwise
+restriction, and deletion by projection.  It does not assert ancilla-free three-bit universality.
+For arity at least four, the restricted smooth circuit is generally not equal away from the
+Boolean cube to the separate direct higher-arity circle formula; only exact Boolean interpolation
+is asserted.
+-/
+
+noncomputable section
+
+open scoped ContDiff Manifold
+
+namespace Toffoli
+namespace CircleExtension
+namespace ThreeBitUniversal
+
+open Synthesis
+
+/-- The chosen nested-index word from discrete three-bit universality. -/
+noncomputable def nestedWord {n : ℕ} (p : BoolPermN n) :
+    List (ThreeBitInstruction (UniversalIndex n)) :=
+  Synthesis.ThreeBitUniversal.word p
+
+/-- The chosen word transported to the consecutive coordinates of the recursive circle product. -/
+noncomputable def flatWord {n : ℕ} (p : BoolPermN n) :
+    List (ThreeBitInstruction (Fin (n + auxCount n))) :=
+  FlatCircuit.flattenWord n (nestedWord p)
+
+/-- The ambient smooth circuit obtained by evaluating the chosen flattened three-bit word. -/
+noncomputable def ambient {n : ℕ} (p : BoolPermN n) :
+    Diffeomorph (circlePowerModel (n + auxCount n)) (circlePowerModel (n + auxCount n))
+      (CirclePower (n + auxCount n)) (CirclePower (n + auxCount n)) ∞ :=
+  FlatCircuit.evalFlattenWord n (nestedWord p)
+
+theorem ambient_eq_evalThreeBitWord {n : ℕ} (p : BoolPermN n) :
+    ambient p = evalThreeBitWord (flatWord p) :=
+  rfl
+
+/-- Discrete clean realization, restated using the nested universal input word. -/
+theorem nestedWord_cleanRealizes {n : ℕ} (p : BoolPermN n) (x : BoolVec n) :
+    ThreeBitCircuit.eval (nestedWord p) (universalInput x) = universalInput (p x) := by
+  exact Synthesis.ThreeBitUniversal.word_cleanRealizes p x
+
+/-- On embedded Boolean data, the ambient smooth circuit maps the fixed universal face exactly
+as the requested Boolean permutation. -/
+theorem ambient_interpolates_insertedBoolean {n : ℕ} (p : BoolPermN n) (x : BoolVec n) :
+    ambient p (insertUniversal n (embed n x)) =
+      insertUniversal n (embed n (p x)) := by
+  rw [insertUniversal_embed, ambient]
+  rw [FlatCircuit.evalFlattenWord_interpolates_universalInput]
+  rw [nestedWord_cleanRealizes]
+  change embed (n + auxCount n) (flatUniversalInput (p x)) = _
+  exact (insertUniversal_embed n (p x)).symm
+
+/-! ## Resource accounting inherited from the verified discrete compiler -/
+
+theorem auxiliary_card (n : ℕ) :
+    Fintype.card (UniversalAux n) = auxCount n :=
+  Synthesis.ThreeBitUniversal.circuit_aux_card n
+
+theorem auxiliary_card_eq_two {n : ℕ} (h : n ≤ 3) :
+    Fintype.card (UniversalAux n) = 2 :=
+  Synthesis.ThreeBitUniversal.circuit_aux_card_eq_two h
+
+theorem auxiliary_card_eq_sub_one {n : ℕ} (h : 3 ≤ n) :
+    Fintype.card (UniversalAux n) = n - 1 :=
+  Synthesis.ThreeBitUniversal.circuit_aux_card_eq_sub_one h
+
+theorem auxiliary_card_le_paper_bound {n : ℕ} (h : 3 ≤ n) :
+    Fintype.card (UniversalAux n) ≤ 2 * n - 3 :=
+  Synthesis.ThreeBitUniversal.circuit_aux_card_le_paper_bound h
+
+/-! ## Empty-data boundary -/
+
+theorem flatWord_zero_eq_nil (p : BoolPermN 0) : flatWord p = [] :=
+  FlatCircuit.flattenWord_zero_eq_nil _
+
+theorem ambient_zero_eq_refl (p : BoolPermN 0) :
+    ambient p =
+      Diffeomorph.refl (circlePowerModel (0 + auxCount 0))
+        (CirclePower (0 + auxCount 0)) ∞ :=
+  FlatCircuit.evalFlattenWord_zero_eq_refl _
+
+/-- At data arity zero no auxiliary circle is actually necessary: the identity diffeomorphism of
+the singleton empty product interpolates the unique Boolean permutation. -/
+theorem exists_zero_extension_noAux (p : BoolPermN 0) :
+    ∃ F : Diffeomorph (circlePowerModel 0) (circlePowerModel 0)
+        (CirclePower 0) (CirclePower 0) ∞,
+      Interpolates F p := by
+  refine ⟨Diffeomorph.refl (circlePowerModel 0) (CirclePower 0) ∞, ?_⟩
+  intro x
+  exact Subsingleton.elim _ _
+
+end ThreeBitUniversal
+end CircleExtension
+end Toffoli
