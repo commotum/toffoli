@@ -16,7 +16,9 @@ assuming a finite-Pi manifold instance that is not available in the pinned mathl
 
 The control signal is `(1 - re z) / 2`.  `controlProduct` is a direct finite product of these
 signals; it deliberately does not iterate the nonassociative binary operation asserted in the
-paper.
+paper.  No angle representative is chosen: the signal is defined on the complex unit-circle point
+itself, so invariance modulo `2π` is built into the definition.  `signal_exp` proves that pulling
+the definition back along the angular map gives the paper's cosine formula.
 -/
 
 noncomputable section
@@ -101,6 +103,19 @@ def boolPoint : Bool → Circle
   | false => 1
   | true => -1
 
+@[simp]
+theorem circle_exp_pi : Circle.exp Real.pi = -1 := by
+  apply Subtype.ext
+  exact Complex.exp_pi_mul_I
+
+@[simp]
+theorem boolPoint_false_eq_exp_zero : boolPoint false = Circle.exp 0 := by
+  simp [boolPoint]
+
+@[simp]
+theorem boolPoint_true_eq_exp_pi : boolPoint true = Circle.exp Real.pi := by
+  simp [boolPoint]
+
 /-- Componentwise embedding of a Boolean vector into a recursive circle product. -/
 def embed : (n : ℕ) → (Fin n → Bool) → CirclePower n
   | 0, _ => 0
@@ -110,22 +125,6 @@ def embed : (n : ℕ) → (Fin n → Bool) → CirclePower n
 def coord : (n : ℕ) → CirclePower n → Fin n → Circle
   | 0, _, i => Fin.elim0 i
   | n + 1, p, i => Fin.lastCases p.2 (fun j => coord n p.1 j) i
-
-/-- Replace coordinate `i` in the recursive product. -/
-def setCoord : (n : ℕ) → CirclePower n → Fin n → Circle → CirclePower n
-  | 0, _, i, _ => Fin.elim0 i
-  | n + 1, p, i, z =>
-      Fin.lastCases (p.1, z) (fun j => (setCoord n p.1 j z, p.2)) i
-
-@[simp]
-theorem coord_setCoord_same (n : ℕ) (p : CirclePower n) (i : Fin n) (z : Circle) :
-    coord n (setCoord n p i z) i = z := by
-  induction n with
-  | zero => exact Fin.elim0 i
-  | succ n ih =>
-      refine Fin.lastCases ?_ (fun j => ?_) i
-      · simp [coord, setCoord]
-      · simpa [coord, setCoord] using ih p.1 j
 
 @[simp]
 theorem coord_embed (n : ℕ) (x : Fin n → Bool) (i : Fin n) :
@@ -156,6 +155,11 @@ theorem embed_injective (n : ℕ) : Function.Injective (embed n) := by
 def signal (z : Circle) : ℝ := (1 - (z : ℂ).re) / 2
 
 @[simp]
+theorem signal_exp (x : ℝ) : signal (Circle.exp x) = (1 - Real.cos x) / 2 := by
+  rw [signal, Circle.coe_exp, Complex.exp_mul_I]
+  simp [Complex.cos_ofReal_re]
+
+@[simp]
 theorem signal_boolPoint (b : Bool) : signal (boolPoint b) = if b then 1 else 0 := by
   cases b <;> norm_num [signal, boolPoint]
 
@@ -171,6 +175,10 @@ theorem contMDiff_signal :
 def controlProduct : (n : ℕ) → CirclePower n → ℝ
   | 0, _ => 1
   | n + 1, p => controlProduct n p.1 * signal p.2
+
+@[simp]
+theorem controlProduct_zero (p : CirclePower 0) : controlProduct 0 p = 1 :=
+  rfl
 
 theorem contMDiff_controlProduct (n : ℕ) :
     ContMDiff (circlePowerModel n) (modelWithCornersSelf ℝ ℝ) ∞ (controlProduct n) := by

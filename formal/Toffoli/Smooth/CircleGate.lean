@@ -79,5 +79,45 @@ theorem coord_gate_target (n : ℕ) (p : CirclePower (n + 1)) :
         Circle.exp (Real.pi * controlProduct n p.1) := by
   simp [coord, gate]
 
+@[simp]
+theorem boolPoint_inv (b : Bool) : (boolPoint b)⁻¹ = boolPoint b := by
+  cases b <;> simp [boolPoint]
+
+@[simp]
+theorem boolPoint_not (b : Bool) :
+    (boolPoint b)⁻¹ * Circle.exp Real.pi = boolPoint (!b) := by
+  cases b <;> simp [boolPoint]
+
+/-- On the embedded Boolean cube, the smooth gate is exactly the AND/NAND permutation. -/
+theorem gate_interpolates_thetaSucc (n : ℕ) (x : Fin (n + 1) → Bool) :
+    gate n (embed (n + 1) x) = embed (n + 1) (AndNand.thetaSucc n x) := by
+  apply Prod.ext
+  · change embed n (Fin.init x) = embed n (Fin.init (AndNand.thetaSucc n x))
+    congr 1
+    funext i
+    exact (AndNand.thetaSucc_apply_control n x i).symm
+  · change
+      (boolPoint (x (Fin.last n)))⁻¹ *
+          Circle.exp (Real.pi * controlProduct n (embed n (Fin.init x))) =
+        boolPoint (AndNand.thetaSucc n x (Fin.last n))
+    rw [controlProduct_embed]
+    by_cases h : ∀ i : Fin n, x i.castSucc = true
+    · have hinit : ∀ i : Fin n, Fin.init x i = true := h
+      rw [if_pos hinit]
+      rw [AndNand.thetaSucc_apply_target, if_pos h]
+      simpa using boolPoint_not (x (Fin.last n))
+    · have hinit : ¬∀ i : Fin n, Fin.init x i = true := h
+      rw [if_neg hinit]
+      rw [AndNand.thetaSucc_apply_target, if_neg h]
+      simp
+
+/-- Diffeomorphism-level form of `gate_interpolates_thetaSucc`. -/
+theorem gateDiffeomorph_interpolates_thetaSucc (n : ℕ) (x : Fin (n + 1) → Bool) :
+    gateDiffeomorph n (embed (n + 1) x) = embed (n + 1) (AndNand.thetaSucc n x) :=
+  gate_interpolates_thetaSucc n x
+
+theorem gate_bijective (n : ℕ) : Function.Bijective (gate n) :=
+  (gateDiffeomorph n).toEquiv.bijective
+
 end CircleExtension
 end Toffoli

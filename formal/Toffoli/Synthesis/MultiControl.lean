@@ -153,6 +153,47 @@ def targetInstruction (k : ℕ) : ThreeBitInstruction (UniversalIndex (k + 4)) :
       have := congrArg Fin.val h
       simp at this)
 
+@[simp]
+theorem targetInstruction_control₁ (k : ℕ) :
+    (targetInstruction k).control₁ = workIndex (Fin.last k) := by
+  simp [targetInstruction]
+
+@[simp]
+theorem targetInstruction_control₂ (k : ℕ) :
+    (targetInstruction k).control₂ = dataIndex ⟨k + 2, by omega⟩ := by
+  simp [targetInstruction]
+
+@[simp]
+theorem targetInstruction_target (k : ℕ) :
+    (targetInstruction k).target = dataIndex (Fin.last (k + 3)) := by
+  simp [targetInstruction]
+
+theorem prefixTrue_last_and_iff (k : ℕ) (x : BoolVec (k + 4)) :
+    PrefixTrue k x (Fin.last k) ∧ x ⟨k + 2, by omega⟩ = true ↔
+      ∀ i : Fin (k + 3), x i.castSucc = true := by
+  constructor
+  · rintro ⟨hprefix, hlast⟩ i
+    refine Fin.lastCases ?_ (fun j => ?_) i
+    · rw [show (Fin.last (k + 2)).castSucc = ⟨k + 2, by omega⟩ by
+          apply Fin.ext
+          rfl]
+      exact hlast
+    · rw [show j.castSucc.castSucc = ⟨j, by omega⟩ by
+          apply Fin.ext
+          rfl]
+      exact hprefix j
+  · intro h
+    constructor
+    · intro i
+      rw [show (⟨i, by omega⟩ : Fin (k + 4)) = i.castSucc.castSucc by
+        apply Fin.ext
+        rfl]
+      exact h i.castSucc
+    · rw [show (⟨k + 2, by omega⟩ : Fin (k + 4)) = (Fin.last (k + 2)).castSucc by
+          apply Fin.ext
+          rfl]
+      exact h (Fin.last (k + 2))
+
 /-- The forward prefix-conjunction ladder. -/
 def computeWord (k : ℕ) : List (ThreeBitInstruction (UniversalIndex (k + 4))) :=
   List.ofFn (prefixInstruction k)
@@ -377,6 +418,69 @@ theorem computeWord_avoids_final (k : ℕ) (g : ThreeBitInstruction (UniversalIn
   rw [computeWord, List.mem_ofFn] at hg
   obtain ⟨i, rfl⟩ := hg
   exact prefixInstruction_avoids_final k i
+
+theorem targetInstruction_apply_of_invariant (k : ℕ) (x : BoolVec (k + 4))
+    (state : BoolWord (UniversalIndex (k + 4)))
+    (h : PrefixInvariant k (k + 1) x state) :
+    (targetInstruction k).perm state =
+      if ∀ i : Fin (k + 3), x i.castSucc = true then
+        state.flipAt (dataIndex (Fin.last (k + 3)))
+      else state := by
+  by_cases hall : ∀ i : Fin (k + 3), x i.castSucc = true
+  · rw [if_pos hall]
+    have hparts := (prefixTrue_last_and_iff k x).2 hall
+    funext i
+    by_cases hi : i = dataIndex (Fin.last (k + 3))
+    · subst i
+      rw [show dataIndex (Fin.last (k + 3)) = (targetInstruction k).target by simp]
+      rw [(targetInstruction k).perm_apply_target]
+      simp only [targetInstruction_control₁, targetInstruction_control₂]
+      rw [h.computed_eq (Fin.last k) (by simp), h.data_eq]
+      simp [hparts.1, hparts.2, targetInstruction_target]
+    · rw [(targetInstruction k).perm_apply_of_ne_target]
+      · exact (BoolWord.flipAt_apply_of_ne state hi).symm
+      · simpa using hi
+  · rw [if_neg hall]
+    have hparts : ¬(PrefixTrue k x (Fin.last k) ∧ x ⟨k + 2, by omega⟩ = true) :=
+      fun hp => hall ((prefixTrue_last_and_iff k x).1 hp)
+    funext i
+    by_cases hi : i = dataIndex (Fin.last (k + 3))
+    · subst i
+      rw [show dataIndex (Fin.last (k + 3)) = (targetInstruction k).target by simp]
+      rw [(targetInstruction k).perm_apply_target]
+      simp only [targetInstruction_control₁, targetInstruction_control₂]
+      rw [h.computed_eq (Fin.last k) (by simp), h.data_eq]
+      simp [hparts, targetInstruction_target]
+    · exact (targetInstruction k).perm_apply_of_ne_target state (by simpa using hi)
+
+@[simp]
+theorem inputState_flipAt_data {n : ℕ} (x : BoolVec n) (target : Fin n) :
+    (inputState x).flipAt (dataIndex target) = inputState (x.flipAt target) := by
+  funext i
+  cases i with
+  | inl j =>
+      simp only [inputState, dataIndex, BoolWord.flipAt, Sum.update_inl_apply_inl,
+        BoolWord.sumEquiv_symm_apply_inl]
+      rw [show BoolWord.sumEquiv.symm (x, universalConstants n) ∘ Sum.inl = x by rfl]
+  | inr aux => simp [inputState, dataIndex, BoolWord.flipAt]
+
+theorem thetaSucc_apply_eq_if_flip (m : ℕ) (x : BoolVec (m + 1)) :
+    AndNand.thetaSucc m x =
+      if ∀ i : Fin m, x i.castSucc = true then x.flipAt (Fin.last m) else x := by
+  by_cases h : ∀ i : Fin m, x i.castSucc = true
+  · rw [if_pos h]
+    funext i
+    refine Fin.lastCases ?_ (fun j => ?_) i
+    · rw [AndNand.thetaSucc_apply_target]
+      simp [h]
+    · rw [AndNand.thetaSucc_apply_control]
+      exact (BoolWord.flipAt_apply_of_ne x (Fin.castSucc_ne_last j)).symm
+  · rw [if_neg h]
+    funext i
+    refine Fin.lastCases ?_ (fun j => ?_) i
+    · rw [AndNand.thetaSucc_apply_target]
+      simp [h]
+    · rw [AndNand.thetaSucc_apply_control]
 
 /-- The all-arity clean circuit word.  Arity zero is deliberately the empty identity word. -/
 def word : (n : ℕ) → List (ThreeBitInstruction (UniversalIndex n))
