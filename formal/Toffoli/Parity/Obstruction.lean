@@ -30,6 +30,12 @@ theorem sign_atomicEdge [Fintype ι] [DecidableEq ι] (x : BoolWord ι) (target 
   classical
   exact Equiv.Perm.sign_swap (BoolWord.flipAt_ne x target).symm
 
+/-- Every full all-other-controls AND/NAND gate is one transposition and hence odd. -/
+theorem sign_andNand [Fintype ι] [DecidableEq ι] (target : ι) :
+    Equiv.Perm.sign (ToffoliGate.andNand target) = -1 := by
+  rw [ToffoliGate.andNand_eq_atomicEdge]
+  exact sign_atomicEdge (fun _ => true) target
+
 /-- No serial composition of strict-coordinate lifts can produce an atomic edge. -/
 theorem not_properlyGenerated_atomicEdge [Fintype ι] [DecidableEq ι]
     (x : BoolWord ι) (target : ι) :
