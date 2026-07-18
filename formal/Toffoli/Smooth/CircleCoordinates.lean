@@ -40,16 +40,21 @@ theorem assemble_coord (n : ℕ) (p : CirclePower n) :
   | zero =>
       exact Subsingleton.elim _ _
   | succ n ih =>
+      rcases p with ⟨p, z⟩
+      rw [assemble]
       apply Prod.ext
-      · simpa only [assemble, coord, Fin.init, Fin.lastCases_castSucc] using ih p.1
-      · simp [assemble, coord]
+      · rw [show Fin.init (coord (n + 1) (p, z)) = coord n p by
+          funext i
+          simp [Fin.init, coord]]
+        exact ih p
+      · simp [coord]
 
 /-- Coordinate families and recursively nested circle products contain the same data. -/
 def coordEquiv (n : ℕ) : CirclePower n ≃ (Fin n → Circle) where
   toFun := coord n
   invFun := assemble n
   left_inv := assemble_coord n
-  right_inv := coord_assemble n
+  right_inv := fun x => funext (coord_assemble n x)
 
 @[simp]
 theorem coordEquiv_apply (n : ℕ) (p : CirclePower n) : coordEquiv n p = coord n p :=
@@ -61,7 +66,9 @@ theorem coordEquiv_symm_apply (n : ℕ) (x : Fin n → Circle) :
   rfl
 
 /-- Two recursive circle products are equal when all their coordinates are equal. -/
-theorem ext {n : ℕ} {p q : CirclePower n} (h : ∀ i, coord n p i = coord n q i) : p = q := by
+@[ext]
+theorem coord_ext {n : ℕ} {p q : CirclePower n} (h : ∀ i, coord n p i = coord n q i) :
+    p = q := by
   rw [← assemble_coord n p, ← assemble_coord n q]
   congr 1
   funext i
@@ -75,15 +82,10 @@ theorem contMDiff_coord (n : ℕ) (i : Fin n) :
   | zero => exact Fin.elim0 i
   | succ n ih =>
       refine Fin.lastCases ?_ (fun j => ?_) i
-      · simpa only [coord, Fin.lastCases_last] using
-          (contMDiff_snd :
-            ContMDiff (circlePowerModel (n + 1)) ManifoldSpace.circle.modelWithCorners ∞
-              (fun p : CirclePower (n + 1) => p.2))
-      · simpa only [coord, Fin.lastCases_castSucc] using
-          (ih j).comp
-            (contMDiff_fst :
-              ContMDiff (circlePowerModel (n + 1)) (circlePowerModel n) ∞
-                (fun p : CirclePower (n + 1) => p.1))
+      · simp only [coord, Fin.lastCases_last]
+        exact contMDiff_snd
+      · simp only [coord, Fin.lastCases_castSucc]
+        exact (ih j).comp contMDiff_fst
 
 /-- A map between recursive circle products is smooth when each assembled coordinate is smooth. -/
 theorem contMDiff_assemble {m n : ℕ} (f : CirclePower m → Fin n → Circle)
@@ -99,7 +101,10 @@ theorem contMDiff_assemble {m n : ℕ} (f : CirclePower m → Fin n → Circle)
           ContMDiff (circlePowerModel m) (circlePowerModel 0) ∞
             (fun _ : CirclePower m => (0 : CirclePower 0)))
   | succ n ih =>
-      simpa only [assemble] using
+      change
+        ContMDiff (circlePowerModel m) (circlePowerModel (n + 1)) ∞
+          (fun p => (assemble n (fun i => f p i.castSucc), f p (Fin.last n)))
+      exact
         ContMDiff.prodMk
           (ih (fun p i => f p i.castSucc) (fun i => hf i.castSucc))
           (hf (Fin.last n))
