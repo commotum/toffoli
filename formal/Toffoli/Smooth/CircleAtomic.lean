@@ -1,6 +1,6 @@
 import Mathlib.Geometry.Manifold.Algebra.Monoid
 import Mathlib.Geometry.Manifold.Diffeomorph
-import Toffoli.Perm.AtomicWord
+import Toffoli.Gate.Atomic
 import Toffoli.Smooth.CircleCoordinates
 
 /-!
@@ -216,11 +216,11 @@ private theorem atomicMap_embed_eq_if_controls {n : ℕ} (base x : BoolVec n)
 
 /-- The atomic diffeomorphism agrees exactly with its Boolean edge transposition on the embedded
 cube. -/
-theorem atomicDiffeomorph_interpolates {n : ℕ} (step : AtomicStep (Fin n)) :
-    Interpolates (atomicDiffeomorph step.base step.target) step.perm := by
+theorem atomicDiffeomorph_interpolates {n : ℕ} (base : BoolVec n) (target : Fin n) :
+    Interpolates (atomicDiffeomorph base target) (atomicEdge base target) := by
   intro x
   rw [atomicDiffeomorph_apply, atomicMap_embed_eq_if_controls,
-    AtomicStep.perm, atomicEdge_eq_if_controls]
+    atomicEdge_eq_if_controls]
 
 end CircleExtension
 end Toffoli

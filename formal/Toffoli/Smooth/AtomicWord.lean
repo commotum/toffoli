@@ -1,3 +1,4 @@
+import Toffoli.Perm.AtomicWord
 import Toffoli.Smooth.CircleAtomic
 
 /-!
@@ -14,6 +15,12 @@ open scoped ContDiff Manifold
 
 namespace Toffoli
 namespace CircleExtension
+
+/-- Step-level wrapper around the lower analytic edge theorem. -/
+theorem atomicStepDiffeomorph_interpolates {n : ℕ} (step : AtomicStep (Fin n)) :
+    Interpolates (atomicDiffeomorph step.base step.target) step.perm := by
+  rw [AtomicStep.perm]
+  exact atomicDiffeomorph_interpolates step.base step.target
 
 /-- Evaluate a word of atomic Boolean edges as smooth circle diffeomorphisms.  The list head acts
 first. -/
@@ -62,7 +69,7 @@ theorem evalAtomicWord_interpolates {n : ℕ} (steps : List (AtomicStep (Fin n))
         evalAtomicWord steps
             (atomicDiffeomorph step.base step.target (embed n x)) =
           embed n (AtomicWord.eval steps (step.perm x))
-      rw [atomicDiffeomorph_interpolates step x]
+      rw [atomicStepDiffeomorph_interpolates step x]
       exact ih (step.perm x)
 
 end CircleExtension
