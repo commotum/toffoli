@@ -1,22 +1,24 @@
 # Toffoli 1981 formalization
 
-This repository is developing a reusable Lean 4 formalization of Tommaso Toffoli's paper
+This repository contains a reusable Lean 4 formalization of Tommaso Toffoli's paper
 “Bicontinuous Extensions of Invertible Combinatorial Functions” (*Mathematical Systems Theory*
 14, 13–23, 1981).
 
 The paper is treated as a mathematical source rather than a formal specification. The project
-will verify its finite permutation, decomposition, parity, universality, and smooth-extension
+verifies its finite permutation, decomposition, parity, universality, and smooth-extension
 claims independently; corrections and strengthened hypotheses are recorded in
 [`goal-1/0-plan.md`](goal-1/0-plan.md). Informal claims about gears, energy, or physical
 realizability are outside the verified core unless a physical model is added explicitly.
 
 ## Status
 
-Stages 1 through 7 are complete: the source/setup audit, finite Boolean/component API,
-generalized Toffoli/AND-NAND permutations, exact Gray/atomic decomposition, corrected
-lower-arity obstruction, and clean resource-qualified universality of the canonical three-bit
-Toffoli, and the corrected explicit circle-valued AND/NAND diffeomorphism all build and have
-recorded axiom audits. The main finite-to-diffeomorphic extension remains in progress.
+Stages 1 through 8 are complete.  The library includes the finite Boolean/component API,
+generalized Toffoli permutations, exact Gray/atomic decomposition, corrected lower-arity
+obstruction, clean resource-qualified three-bit universality, the corrected circle-valued smooth
+gate, a diffeomorphic circle extension of every finite Boolean permutation, and a qualified smooth
+three-bit realization with an explicitly stable auxiliary face.  Main-result axiom audits report
+only standard Lean/mathlib foundations.  Final integration and reproducibility review is in
+progress.
 
 ## Lean setup
 
@@ -33,6 +35,8 @@ lake build Toffoli.Parity
 lake build Toffoli.Synthesis
 lake build Toffoli
 lake build Toffoli.Smooth
+lake build Toffoli.Audit.Axioms.SmoothExtension
+lake build Toffoli.Audit.Axioms.SmoothSynthesis
 ```
 
 Development follows [`BUILD-PLAN.md`](BUILD-PLAN.md): use narrow imports and focused leaf builds,
@@ -53,3 +57,5 @@ configuration changes, public milestones, and final integration.
   low-arity correction evidence.
 - `goal-1/7-CIRCLE-EXT.md`: recursive circle products, corrected smooth gate, and interpolation
   evidence.
+- `goal-1/8-MANIFOLD-EXT.md`: arbitrary-permutation diffeomorphic extension, smooth three-bit
+  fixed-face stability, qualified restriction/deletion, and axiom-audit evidence.
