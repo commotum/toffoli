@@ -16,6 +16,21 @@ namespace Toffoli.Synthesis
 /-- Shared auxiliary coordinates for an `n`-bit target: two enables and `n - 3` work bits. -/
 abbrev UniversalAux (n : ℕ) := Fin 2 ⊕ Fin (n - 3)
 
+/-- Data coordinates followed by the shared auxiliary bank. -/
+abbrev UniversalIndex (n : ℕ) := Fin n ⊕ UniversalAux n
+
+/-- Embed a data coordinate into the universal ambient index. -/
+def dataIndex {n : ℕ} (i : Fin n) : UniversalIndex n :=
+  Sum.inl i
+
+/-- Embed one of the two persistent enable coordinates. -/
+def enableIndex {n : ℕ} (i : Fin 2) : UniversalIndex n :=
+  Sum.inr (Sum.inl i)
+
+/-- Embed a clean work coordinate. -/
+def workIndex {n : ℕ} (i : Fin (n - 3)) : UniversalIndex n :=
+  Sum.inr (Sum.inr i)
+
 /-- The clean auxiliary word: enable bits are `true` and work bits are `false`. -/
 def universalConstants (n : ℕ) : BoolWord (UniversalAux n) :=
   Sum.elim (fun _ => true) (fun _ => false)

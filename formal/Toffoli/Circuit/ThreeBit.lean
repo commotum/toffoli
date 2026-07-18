@@ -50,34 +50,48 @@ theorem control₁_ne_target (g : ThreeBitInstruction ι) : g.control₁ ≠ g.t
 theorem control₂_ne_target (g : ThreeBitInstruction ι) : g.control₂ ≠ g.target :=
   g.placement.injective.ne (by decide)
 
+private theorem target_not_mem_embFinTwo_range (control₁ control₂ target : ι)
+    (h₁₂ : control₁ ≠ control₂) (h₁t : control₁ ≠ target)
+    (h₂t : control₂ ≠ target) :
+    target ∉ Set.range (Function.Embedding.embFinTwo h₁₂) := by
+  rintro ⟨i, hi⟩
+  by_cases hzero : i = 0
+  · subst i
+    exact h₁t hi
+  · rw [Fin.eq_one_of_ne_zero i hzero] at hi
+    exact h₂t hi
+
 /-- Build a placement from three explicitly distinct coordinates. -/
 def ofDistinct (control₁ control₂ target : ι) (h₁₂ : control₁ ≠ control₂)
     (h₁t : control₁ ≠ target) (h₂t : control₂ ≠ target) : ThreeBitInstruction ι where
-  placement := Fin.Embedding.snoc (Function.Embedding.embFinTwo h₁₂) (by
-    rintro ⟨i, hi⟩
-    by_cases hzero : i = 0
-    · subst i
-      exact h₁t hi
-    · rw [Fin.eq_one_of_ne_zero i hzero] at hi
-      exact h₂t hi)
+  placement := Fin.Embedding.snoc (Function.Embedding.embFinTwo h₁₂)
+    (target_not_mem_embFinTwo_range control₁ control₂ target h₁₂ h₁t h₂t)
 
 @[simp]
 theorem ofDistinct_control₁ (control₁ control₂ target : ι) (h₁₂ : control₁ ≠ control₂)
     (h₁t : control₁ ≠ target) (h₂t : control₂ ≠ target) :
     (ofDistinct control₁ control₂ target h₁₂ h₁t h₂t).control₁ = control₁ := by
-  simp [ThreeBitInstruction.control₁, ofDistinct]
+  change (Fin.Embedding.snoc (Function.Embedding.embFinTwo h₁₂)
+    (target_not_mem_embFinTwo_range control₁ control₂ target h₁₂ h₁t h₂t)) 0 = control₁
+  rw [show (0 : Fin 3) = (0 : Fin 2).castSucc by rfl, Fin.Embedding.snoc_castSucc]
+  exact Function.Embedding.embFinTwo_apply_zero h₁₂
 
 @[simp]
 theorem ofDistinct_control₂ (control₁ control₂ target : ι) (h₁₂ : control₁ ≠ control₂)
     (h₁t : control₁ ≠ target) (h₂t : control₂ ≠ target) :
     (ofDistinct control₁ control₂ target h₁₂ h₁t h₂t).control₂ = control₂ := by
-  simp [ThreeBitInstruction.control₂, ofDistinct]
+  change (Fin.Embedding.snoc (Function.Embedding.embFinTwo h₁₂)
+    (target_not_mem_embFinTwo_range control₁ control₂ target h₁₂ h₁t h₂t)) 1 = control₂
+  rw [show (1 : Fin 3) = (1 : Fin 2).castSucc by rfl, Fin.Embedding.snoc_castSucc]
+  exact Function.Embedding.embFinTwo_apply_one h₁₂
 
 @[simp]
 theorem ofDistinct_target (control₁ control₂ target : ι) (h₁₂ : control₁ ≠ control₂)
     (h₁t : control₁ ≠ target) (h₂t : control₂ ≠ target) :
     (ofDistinct control₁ control₂ target h₁₂ h₁t h₂t).target = target := by
-  simp [ThreeBitInstruction.target, ofDistinct]
+  change (Fin.Embedding.snoc (Function.Embedding.embFinTwo h₁₂)
+    (target_not_mem_embFinTwo_range control₁ control₂ target h₁₂ h₁t h₂t)) 2 = target
+  rw [show (2 : Fin 3) = Fin.last 2 by rfl, Fin.Embedding.snoc_last]
 
 /-- The actual generalized-Toffoli specification of a placed instruction. -/
 def gate (g : ThreeBitInstruction ι) : ToffoliGate ι :=
@@ -91,8 +105,7 @@ theorem gate_target (g : ThreeBitInstruction ι) : g.gate.target = g.target :=
 theorem gate_active_iff (g : ThreeBitInstruction ι) (x : BoolWord ι) :
     g.gate.Active x ↔ x g.control₁ = true ∧ x g.control₂ = true := by
   rw [gate, ToffoliGate.map_active_iff]
-  simpa [control₁, control₂] using
-    AndNand.thetaSucc_two_active (fun i : Fin 3 ↦ x (g.placement i))
+  simp [control₁, control₂]
 
 /-- The Boolean permutation implemented by a placed instruction. -/
 def perm [DecidableEq ι] (g : ThreeBitInstruction ι) : BoolPerm ι :=
