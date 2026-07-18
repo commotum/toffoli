@@ -1,6 +1,6 @@
 # 9-INTEGRATE-AUDIT
 
-Status: in progress — final correction audit pending.
+Status: complete.
 
 ## Current Facts
 
@@ -14,12 +14,15 @@ Status: in progress — final correction audit pending.
   `Classical.choice`, and `Quot.sound` in their recorded axiom output.
 - The explicit clean all-surfaces milestone passed: 2607 jobs, 1099.53 s wall, 16568.58 s user,
   1714.06 s system, and 3009048 KiB maximum RSS.
-- The import-graph audit found 69 modules and 136 internal edges, with no cycle, reverse smooth
+- The final import graph has 71 modules and 138 internal edges, with no cycle, reverse smooth
   dependency, umbrella import in an implementation leaf, audit import leak, or unreachable
   implementation module.
 - Repository-wide Lean scans find no proof holes, project axioms, or `unsafe` declarations.
-- Integration and reproducibility checks have passed; a final correction audit remains before the
-  stage can be marked complete.
+- `Toffoli.Audit.PaperCircleOperation` now machine-checks the original binary circle operation's
+  representative invariance, smoothness, nonassociativity, and absence of either one-sided
+  identity; its axiom audit is standard-only.
+- The final warm setup/facade/boundary/axiom set passed in 3.38 s, and plain `lake build` passed in
+  2.21 s.
 
 ## Updated Assumptions
 
@@ -94,6 +97,7 @@ lake build \
   Toffoli.Audit.ParityBoundary \
   Toffoli.Audit.UniversalityBoundary \
   Toffoli.Audit.CircleBoundary \
+  Toffoli.Audit.PaperCircleOperation \
   Toffoli.Audit.SmoothExtensionBoundary \
   Toffoli.Audit.SmoothSynthesisBoundary \
   Toffoli.Audit.Axioms.Finite \
@@ -102,6 +106,7 @@ lake build \
   Toffoli.Audit.Axioms.Parity \
   Toffoli.Audit.Axioms.Universality \
   Toffoli.Audit.Axioms.Circle \
+  Toffoli.Audit.Axioms.PaperCircleOperation \
   Toffoli.Audit.Axioms.SmoothExtension \
   Toffoli.Audit.Axioms.SmoothSynthesis
 ```
@@ -145,8 +150,15 @@ facade.  Setup-only validation remains available separately as `lake build Toffo
   routine work follows the focused targets above.
 - All main-result `#print axioms` output is confined to `propext`, `Classical.choice`, and
   `Quot.sound`; there is no project-specific axiom.
-- The 69-module, 136-edge internal import graph is acyclic.  It has no discrete-to-smooth reverse
+- The 71-module, 138-edge internal import graph is acyclic.  It has no discrete-to-smooth reverse
   edge, no implementation leaf importing an umbrella, no public module importing an audit, and no
   unreachable implementation module.
 - Lean-source scans found no `sorry`, `admit`, project `axiom`, or `unsafe` declaration.
-- Stage completion remains pending only while the final correction audit is reviewed.
+- `Toffoli.Audit.PaperCircleOperation` proves independent-period invariance of the paper's angular
+  formula, its smoothness and commutativity, its nonassociativity, and the absence of left, right,
+  or two-sided identities. Its focused build passed in 5.05 s and its axiom leaf in 4.56 s.
+- The final warm target set—including setup smoke, both facades, every boundary leaf, the
+  paper-operation correction, and every axiom leaf—passed in 3.38 s with 1115716 KiB maximum RSS.
+  Plain default `lake build` passed 962 jobs in 2.21 s.
+- The source PDF has a non-executable mode and tracked macOS metadata has been removed. Final
+  warning, whitespace, and diff checks pass.

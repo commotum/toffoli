@@ -12,13 +12,25 @@ realizability are outside the verified core unless a physical model is added exp
 
 ## Status
 
-Stages 1 through 8 are complete.  The library includes the finite Boolean/component API,
+All nine stages are complete.  The library includes the finite Boolean/component API,
 generalized Toffoli permutations, exact Gray/atomic decomposition, corrected lower-arity
 obstruction, clean resource-qualified three-bit universality, the corrected circle-valued smooth
 gate, a diffeomorphic circle extension of every finite Boolean permutation, and a qualified smooth
 three-bit realization with an explicitly stable auxiliary face.  Main-result axiom audits report
-only standard Lean/mathlib foundations.  The final integration build and structural audit pass;
-the final correction audit is pending.
+only standard Lean/mathlib foundations. The final integration, structural, correction, and
+reproducibility audits pass.
+
+## Main entry points
+
+- `Toffoli` is the lightweight discrete facade: Boolean permutations, component APIs, generalized
+  gates, Gray decomposition, parity, and qualified three-bit synthesis.
+- `Toffoli.Smooth` is deliberately separate: direct circle-valued extensions and qualified smooth
+  three-bit realization. Importing the discrete facade does not pull in manifold dependencies.
+- `Toffoli.CircleExtension.exists_extension` extends every finite Boolean permutation to a
+  diffeomorphism of a finite product of the connected complex circle.
+- `Toffoli.Synthesis.ThreeBitUniversal.circuit_cleanRealizes` and
+  `Toffoli.CircleExtension.ThreeBitUniversal.exists_qualified_smooth_realization` expose the
+  constants, returned auxiliaries, restriction, deletion, and exact resource qualification.
 
 ## Lean setup
 
@@ -47,6 +59,7 @@ lake build Toffoli.Perm.Decomposition
 lake build Toffoli.Synthesis.Universality
 lake build Toffoli.Smooth.Extension
 lake build Toffoli.Smooth.Synthesis.Universality
+lake build Toffoli.Audit.PaperCircleOperation
 ```
 
 Use `lake build Toffoli` for the discrete facade or `lake build Toffoli.Smooth` for the smooth
@@ -72,6 +85,7 @@ lake build \
   Toffoli.Audit.ParityBoundary \
   Toffoli.Audit.UniversalityBoundary \
   Toffoli.Audit.CircleBoundary \
+  Toffoli.Audit.PaperCircleOperation \
   Toffoli.Audit.SmoothExtensionBoundary \
   Toffoli.Audit.SmoothSynthesisBoundary \
   Toffoli.Audit.Axioms.Finite \
@@ -80,13 +94,16 @@ lake build \
   Toffoli.Audit.Axioms.Parity \
   Toffoli.Audit.Axioms.Universality \
   Toffoli.Audit.Axioms.Circle \
+  Toffoli.Audit.Axioms.PaperCircleOperation \
   Toffoli.Audit.Axioms.SmoothExtension \
   Toffoli.Audit.Axioms.SmoothSynthesis
 ```
 
 The recorded clean milestone completed 2607 jobs in 1099.53 s wall time (16568.58 s user,
-1714.06 s system; maximum RSS 3009048 KiB).  Across all main-result axiom audits, the only
-reported axioms are `propext`, `Classical.choice`, and `Quot.sound`.
+1714.06 s system; maximum RSS 3009048 KiB). The final correction leaf was then added without
+repeating that dependency rebuild: its focused and axiom builds took 5.05 s and 4.56 s, and the
+final warm all-surface set above took 3.38 s. Across all main-result and correction axiom audits,
+the only reported axioms are `propext`, `Classical.choice`, and `Quot.sound`.
 
 ## Sources and operating documents
 
@@ -104,3 +121,5 @@ reported axioms are `propext`, `Classical.choice`, and `Quot.sound`.
   evidence.
 - `goal-1/8-MANIFOLD-EXT.md`: arbitrary-permutation diffeomorphic extension, smooth three-bit
   fixed-face stability, qualified restriction/deletion, and axiom-audit evidence.
+- `goal-1/9-INTEGRATE-AUDIT.md`: final build, import-graph, correction, hygiene, and axiom-audit
+  evidence.

@@ -1,6 +1,8 @@
 # Goal 1 Execution Loop
 
-Use this protocol for every implementation stage in `goal-1/0-plan.md`. The current scaffold does not start Stage 1.
+Use this protocol for future maintenance or an explicitly added implementation stage. Stages 1–9
+in `goal-1/0-plan.md` are complete; do not reopen them or infer new scope without a concrete
+requirement.
 
 ## Repeatable Loop
 

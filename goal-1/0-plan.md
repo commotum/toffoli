@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `8-MANIFOLD-EXT` complete; Stage `9-INTEGRATE-AUDIT` in progress.
+Status: complete. Stages `1-SOURCE-AUDIT` through `9-INTEGRATE-AUDIT` are verified.
 
 ## Big-Picture Objective
 
@@ -44,7 +44,11 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - `formal/lean-toolchain` pins Lean 4.32.0. `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`, and the generated manifest records that exact revision.
 - The Stage 1 smoke leaf imports only `Mathlib.Logic.Equiv.Basic`; focused, root-target, and initial full builds pass.
 - The PDF has 11 scan pages corresponding to printed pages 13–23. The principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3.
-- Source audit has confirmed that the binary circle operation in Lemma 4.2 is well defined but is not associative and has no multiplicative identity, contrary to the paper's “all ring axioms except distributivity” assertion. The required smooth gate can instead use the direct finite control product.
+- `Toffoli.Audit.PaperCircleOperation` machine-checks that the binary circle operation in Lemma
+  4.2 is invariant under independent `2πℤ` representative changes and smooth, but is not
+  associative and has no left, right, or two-sided identity, contrary to the paper's “all ring
+  axioms except distributivity” assertion. The verified smooth gate instead uses the direct finite
+  control product.
 - Printed page 21 contains two source errors in Theorem 5.2's proof: it cites Figure 4 rather than Figure 7 and writes the restriction face as `B³ × {0}` although the displayed five-wire construction fixes one wire and retains four, so it must be `B⁴ × {0}`.
 - The finite core is implemented and verified. It uses generic indexed Boolean words and finite
   aliases, distinguishes coordinate wiring from gate conjugation, provides disjoint tensoring and
@@ -148,7 +152,7 @@ Smooth/{CircleModel,CircleCoordinates,CircleGate,CircleAtomic,CircleReindex,
   → Smooth/{UniversalLayout,UniversalFace,ThreeBitCircuit,ThreeBitStability}
   → Smooth/Synthesis/{FlatCircuit,AtomicStability,Universality}
 
-Audit/{*Boundary,Axioms/*}
+Audit/{PaperCircleOperation,*Boundary,Axioms/*}
 ```
 
 The implemented fanout boundaries are:
@@ -223,6 +227,8 @@ The following are implemented declarations in the pinned project.
 
 - This paper map and the correction log link each main claim to its verified theorem or explicit
   exclusion.
+- `Toffoli.Audit.PaperCircleOperation` checks representative independence, smoothness,
+  nonassociativity, and absence of an identity for the paper's rejected binary operation.
 - `Toffoli.Audit.Axioms.*` runs `#print axioms` on representative exported theorems, and
   `Toffoli.Audit.*Boundary` checks empty/low-arity behavior and exact composition conventions.
 
@@ -263,7 +269,7 @@ scan; each in-scope main claim has a Lean artifact or an explicit out-of-scope d
 | Printed p. 16, §3: deletion of singleton-valued dummy variables | `Component.fixRightEquiv`, `RightDummy.deleteRight`, `projectUniversal` under face stability | product decompositions | Verified in three deliberately distinct APIs |
 | Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | `ToffoliGate`, `ToffoliGate.perm`, `AndNand.thetaSucc`, component and AND/NAND lemmas | finite controls/target | Verified for every positive order; no order-zero member; `n=1,2,3` conventions checked |
 | Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | `atomicEdge`, `IsEndpointWord.eval_eq_swap`, `AtomicWord.exists_eval_eq`, masked-NOT conjugation theorems | cube adjacency, finite permutation induction | Verified with an explicit recursive palindrome and corrected two-sided conjugation |
-| Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | `CircleExtension.gateDiffeomorph`, `gate_interpolates_thetaSucc` | analytic `Circle`, recursive products, direct finite control product | Corrected and verified for every positive order, including zero controls/NOT |
+| Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | `Audit.PaperCircleOperation.paperMul_exp_add_periods`, `paperMul_not_associative`, `paperMul_no_identity`; `CircleExtension.gateDiffeomorph`, `gate_interpolates_thetaSucc` | analytic `Circle`, recursive products, direct finite control product | Original binary operation checked and rejected as a ring operation; corrected gate verified for every positive order, including zero controls/NOT |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | `extension_interpolates`, `exists_extension`, `connected_circle_witness` | atomic circle extensions, `AtomicWord.decompose` | Corrected construction verified without physical interpretation |
 | Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | `sign_extendRight`, `paperGenerated_le_evenSubgroup`, low-arity theorems | sign, explicit proper placement, coordinate wiring | Corrected and verified: parity for `n≥3`; separate complement invariant at `n=2`; trivial `n=1`; false existential conclusion at `n=0` |
 | Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | `Synthesis.MultiControl.figureSeven_apply`, `Synthesis.ThreeBitUniversal.circuit_cleanRealizes`, `circuit_restrictFaces_eq`, `circuit_deleteRight_eq` | clean-ancilla recursion, atomic decomposition, dummy operations | Corrected and verified; exact count `2+(n-3)`, paper bound only for `n≥3` |
@@ -276,7 +282,7 @@ Each entry records its source issue, mathematical risk, required evidence, and v
 
 | ID | Source issue | Mathematical risk | Verification criterion | Disposition |
 |---|---|---|---|---|
-| C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2`; document the counterexample `(π/2 ∘ π/2) ∘ π ≠ π/2 ∘ (π/2 ∘ π)` | Resolved by corrected construction: `controlProduct` is a direct finite product; `signal_exp` records the angular formula. The false ring claim is rejected |
+| C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Check periodicity, smoothness, nonassociativity, and identity failure; formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2` | Resolved and machine-checked: `PaperCircleOperation.paperMul_exp_add_periods` proves representative invariance, `contMDiff_paperMul` proves smoothness, `paperMul_not_associative` and `paperMul_no_*identity` reject the ring claim; the public construction uses direct `controlProduct` instead |
 | C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Resolved for the corrected formula by `gate_involutive`, `contMDiff_gate`, `gate_bijective`, and `gateDiffeomorph`; zero controls use empty product `1` |
 | C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Resolved: `boolPoint` sends `false,true` to `1,-1`; `embed_injective` proves distinctness and `gate_interpolates_thetaSucc` proves the full truth table |
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Resolved by scope: `connected_circle_witness` exhibits the connected complex circle and `exists_extension` proves the required product diffeomorphism; no every-connected-manifold theorem is claimed |
@@ -344,6 +350,9 @@ Each entry records its source issue, mathematical risk, required evidence, and v
   diagnostics remain non-public; all direct and qualified smooth main results report only
   `propext`, `Classical.choice`, and `Quot.sound`.  The discrete root deliberately remains free of
   manifold imports.
+- Stage 9 adds the rejected-operation check only as a terminal non-public audit leaf. Its focused
+  build completed in 5.05 s and its axiom leaf in 4.56 s. The final warm setup/facade/boundary/
+  axiom target set completed in 3.38 s; the default discrete target completed in 2.21 s.
 
 ### Mathlib reconnaissance disposition
 
@@ -352,8 +361,9 @@ Each entry records its source issue, mathematical risk, required evidence, and v
 - No ready-made Gray-path decomposition matched the required exact word, so `Cube.Path` and
   `Perm.AtomicWord` supply the local reusable construction.
 - The smooth implementation uses complex `Circle` and recursive binary products. It does not
-  define an angular quotient lift, so no quotient-representative well-definedness assumption is
-  present in the verified construction.
+  define an angular quotient lift. The non-public `PaperCircleOperation` audit instead proves
+  invariance under independent `2πℤ` shifts after `Circle.exp`, so representative independence is
+  checked without introducing the less robust quotient-manifold stack.
 
 ### Confirmed pinned mathlib surfaces
 
@@ -613,7 +623,7 @@ Determine and prove the strongest correct extension theorem for products of a co
 
 ### 9-INTEGRATE-AUDIT
 
-Status: in progress.
+Status: complete.
 
 #### Big Picture Objective
 
@@ -639,3 +649,20 @@ Turn the proved modules into a coherent reusable library and close the paper/cor
 - The final module graph keeps heavy proofs/audits out of low-level dependency paths, and focused build commands for common edit surfaces are documented.
 - Documentation preserves all conceptual distinctions and accurately states resource assumptions and limitations.
 - The original objective, rather than merely the easiest subset, is demonstrably achieved or any genuinely unresolved claim remains explicit next work rather than being marked complete.
+
+#### Stage Results
+
+- A clean explicit build of both facades and all then-existing boundary/axiom leaves passed 2607
+  jobs in 1099.53 s wall time with 3009048 KiB maximum RSS. This cold cost includes rebuilding
+  pinned mathlib and is deliberately milestone-only.
+- The final warm target set, including `Toffoli.Smoke`, both facades, every boundary audit, the new
+  paper-operation audit, and every axiom audit, passed in 3.38 s; plain `lake build` passed in
+  2.21 s.
+- The final graph contains 71 Lean modules and 138 internal imports, with no cycles, reverse
+  smooth imports, implementation-to-umbrella imports, public audit imports, or unreachable
+  implementation leaves.
+- Lean-source scans find no `sorry`, `admit`, project `axiom`, `unsafe`, `partial`, `opaque`, or
+  `extern` declaration. All representative axiom output is confined to `propext`,
+  `Classical.choice`, and `Quot.sound`.
+- The paper map and all C-001–C-023 corrections have final dispositions. Physical mechanisms
+  remain explicitly outside the verified core. Repository whitespace/diff checks pass.

@@ -8,8 +8,10 @@ Status: complete.
   smooth inversion, multiplication, coercion to `ℂ`, and `Circle.exp : ℝ → Circle`.
 - The source circle `ℝ/(2πℤ)` can be represented without choosing angle representatives: the
   complex unit-circle point `Circle.exp x` depends only on the angle modulo `2π`.
-- The paper's binary operation is well defined but neither associative nor unital.  Its iterated
-  expression is therefore ambiguous; only the direct finite product of selector signals is used.
+- The non-public `Audit.PaperCircleOperation` leaf proves that the paper's binary operation is
+  invariant under independent `2πℤ` changes of angle representative and smooth, but neither
+  associative nor left/right unital. Its iterated expression is therefore ambiguous; only the
+  direct finite product of selector signals is used publicly.
 - Pinned mathlib has robust binary product manifolds but no turnkey finite-Pi manifold and
   diffeomorphism API.  A right-nested product with a singleton zero-fold product avoids assuming
   missing infrastructure.
@@ -137,6 +139,11 @@ component preservation, and interpolation for every positive gate order includin
   embedding, direct product, smoothness, inverse, diffeomorphism, and interpolation results.
   Proof-hole/project-axiom/unsafe scans, reverse-import checks, warning review, and
   `git diff --check` pass.
+- `Toffoli.Audit.PaperCircleOperation.paperMul_exp_add_periods`, `contMDiff_paperMul`,
+  `paperMul_not_associative`, `paperMul_no_left_identity`, `paperMul_no_right_identity`, and
+  `paperMul_no_identity` machine-check the rejected source
+  operation in a terminal audit leaf. Its focused build passed in 5.05 s and its axiom audit in
+  4.56 s; the audit is not imported by either public facade.
 - Corrections C-001, C-002, C-003, and the recursive-product choice C-023 are now backed by Lean
   declarations.  Arbitrary-coordinate atomic diffeomorphisms and the main extension fold remain
   explicitly assigned to Stage 8.

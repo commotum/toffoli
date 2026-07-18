@@ -88,6 +88,10 @@ Establish a source-grounded and reproducible baseline: an exact paper claim inve
   - Theorem 5.3's one-line “parallel” proof establishes valid interpolation only after its smooth stable-face construction is reconstructed; it cannot silently assert equality of ambiguous off-cube `Θ⁽ⁿ⁾` formulas.
 - Recorded that literal `M ⊇ B` becomes an explicit two-point embedding and that “componentwise” preserves product factors rather than imposing coordinatewise independence.
 - Classified the gear/cam/no-dead-point, work/heat, dissipation, and physical-realizability language outside the verified core.
+- Final fold-back: `Toffoli.Audit.PaperCircleOperation` later machine-checks the first finding via
+  periodicity under independent `2πℤ` shifts, smoothness, a nonassociativity witness, and global
+  no-left/no-right-identity theorems. The public construction remains the corrected direct finite
+  product.
 
 ### Lean and dependency setup
 
