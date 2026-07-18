@@ -120,6 +120,25 @@ theorem andNand_eq_atomicEdge (target : ι) :
       simp [andNand_apply_target, hactive]
     · exact andNand_apply_of_ne target x hi
 
+/-- Conjugating an arbitrary cube-edge atom by a componentwise NOT mask gives the canonical
+all-positive AND/NAND atom.  Both the pre- and post-compositions in this conjugation are
+essential; applying NOT only before the gate would not preserve the permutation outside the
+chosen edge. -/
+theorem edgeNormalizer_permCongr_atomicEdge (base : BoolWord ι) (target : ι) :
+    (BoolWord.edgeNormalizer base).permCongr (atomicEdge base target) = andNand target := by
+  rw [atomicEdge, Equiv.permCongr_def, Equiv.symm_trans_swap_trans]
+  simp only [BoolWord.edgeNormalizer_apply_base,
+    BoolWord.edgeNormalizer_apply_flipAt, andNand_eq_atomicEdge, atomicEdge]
+
+/-- Equivalently, every atomic edge is obtained from the AND/NAND atom by the same masked NOT
+before and after it. -/
+theorem atomicEdge_eq_edgeNormalizer_permCongr_andNand (base : BoolWord ι) (target : ι) :
+    atomicEdge base target =
+      (BoolWord.edgeNormalizer base).permCongr (andNand target) := by
+  have h := congrArg ((BoolWord.edgeNormalizer base).permCongr)
+    (edgeNormalizer_permCongr_atomicEdge base target)
+  simpa using h
+
 end ToffoliGate
 
 end Toffoli

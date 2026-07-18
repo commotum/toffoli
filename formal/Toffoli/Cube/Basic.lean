@@ -46,6 +46,65 @@ theorem flipAt_ne (x : BoolWord ι) (target : ι) : x.flipAt target ≠ x := by
 
 end BoolWord
 
+namespace BoolWord
+
+variable {ι : Type u}
+
+/-- Complement exactly the components selected by a Boolean mask. -/
+def flipMask (mask x : BoolWord ι) : BoolWord ι :=
+  fun i => if mask i then !(x i) else x i
+
+@[simp]
+theorem flipMask_apply (mask x : BoolWord ι) (i : ι) :
+    flipMask mask x i = if mask i then !(x i) else x i :=
+  rfl
+
+@[simp]
+theorem flipMask_involutive (mask : BoolWord ι) : Function.Involutive (flipMask mask) := by
+  intro x
+  funext i
+  cases hmask : mask i <;> simp [flipMask, hmask]
+
+/-- Componentwise masked NOT, as a self-inverse permutation of Boolean words. -/
+def flipMaskEquiv (mask : BoolWord ι) : BoolWord ι ≃ BoolWord ι where
+  toFun := flipMask mask
+  invFun := flipMask mask
+  left_inv := flipMask_involutive mask
+  right_inv := flipMask_involutive mask
+
+@[simp]
+theorem flipMaskEquiv_apply (mask x : BoolWord ι) :
+    flipMaskEquiv mask x = flipMask mask x :=
+  rfl
+
+@[simp]
+theorem flipMaskEquiv_symm (mask : BoolWord ι) : (flipMaskEquiv mask).symm = flipMaskEquiv mask :=
+  rfl
+
+/-- A componentwise NOT mask sending `base` to the all-`true` word. -/
+def edgeNormalizer (base : BoolWord ι) : BoolWord ι ≃ BoolWord ι :=
+  flipMaskEquiv fun i => !(base i)
+
+@[simp]
+theorem edgeNormalizer_apply_base (base : BoolWord ι) :
+    edgeNormalizer base base = (fun _ => true) := by
+  funext i
+  cases hi : base i <;> simp [edgeNormalizer, flipMaskEquiv, flipMask, hi]
+
+@[simp]
+theorem edgeNormalizer_apply_flipAt [DecidableEq ι] (base : BoolWord ι) (target : ι) :
+    edgeNormalizer base (base.flipAt target) =
+      BoolWord.flipAt (fun _ : ι => true) target := by
+  funext i
+  by_cases hi : i = target
+  · subst i
+    cases hbase : base target <;>
+      simp [edgeNormalizer, flipMaskEquiv, flipMask, flipAt, hbase]
+  · cases hbase : base i <;>
+      simp [edgeNormalizer, flipMaskEquiv, flipMask, flipAt, hi, hbase]
+
+end BoolWord
+
 /-- Two Boolean words are cube-adjacent when one is obtained from the other by flipping one
 component. -/
 def CubeAdjacent {ι : Type u} [DecidableEq ι] (x y : BoolWord ι) : Prop :=
