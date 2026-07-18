@@ -27,7 +27,8 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Cover arity zero and low-arity cases deliberately; never rely on an implicit nonempty finite type.
 - State Boolean conventions and chosen embedded circle points explicitly.
 - Do not accept a circle operation expressed on angle representatives until well-definedness modulo the period is proved.
-- For every proposed involutive smooth extension, prove smoothness, the interpolation property, bijectivity, the inverse law, and preservation of the claimed component structure.
+- For every involutive smooth extension introduced, prove smoothness, the interpolation property,
+  bijectivity, the inverse law, and preservation of the claimed component structure.
 - For Gray-code decomposition, record the exact order and composition convention and test it in small dimensions.
 - For parity and three-bit universality results, make all arity, ancilla, fixed-constant, restriction, and dummy-coordinate counts explicit.
 - Keep a paper-to-Lean claim map, correction/unresolved-point log, dependency record, and axiom audit current as the formalization advances.
@@ -35,14 +36,13 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Avoid editing high-fanout modules for convenience. Avoid broad global simp lemmas, instances, notation, or umbrella imports unless the stage establishes a concrete need.
 - Do not redefine success as a convenient subset of the paper. Unsupported or false claims may be corrected or decisively rejected, but the disposition and evidence must be recorded.
 
-## Current Facts
+## Verified Project and Mathematical Facts
 
 - The repository contains the paper as `toffoli-1981/toffoli-1981.md` and `toffoli-1981/toffoli-1981.pdf`, together with extracted figures. The Markdown identifies it as Tommaso Toffoli, *Mathematical Systems Theory* 14 (1981), 13–23.
 - Repository-root `BUILD-PLAN.md` defines the mandatory incremental Lean build discipline for this goal.
 - The repository also contains a minimal Python/uv shell (`pyproject.toml`, `uv.lock`, and `main.py`). The Lean project is isolated under `formal/`.
 - `formal/lean-toolchain` pins Lean 4.32.0. `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`, and the generated manifest records that exact revision.
 - The Stage 1 smoke leaf imports only `Mathlib.Logic.Equiv.Basic`; focused, root-target, and initial full builds pass.
-- No existing `goal-*` folder was present before this scaffold, so this goal is `goal-1`.
 - The PDF has 11 scan pages corresponding to printed pages 13–23. The principal formal claims are Definition 4.1, Lemmas 4.1–4.2, Theorem 4.1, and Theorems 5.1–5.3.
 - Source audit has confirmed that the binary circle operation in Lemma 4.2 is well defined but is not associative and has no multiplicative identity, contrary to the paper's “all ring axioms except distributivity” assertion. The required smooth gate can instead use the direct finite control product.
 - Printed page 21 contains two source errors in Theorem 5.2's proof: it cites Figure 4 rather than Figure 7 and writes the restriction face as `B³ × {0}` although the displayed five-wire construction fixes one wire and retains four, so it must be `B⁴ × {0}`.
@@ -85,7 +85,7 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   face, deletion/projection, auxiliary count, and interpolation.  No off-cube equality with the
   separately corrected higher-arity gate is asserted.
 
-## Current Assumptions to Validate
+## Verified Representation and Scope Decisions
 
 - Boolean words use `Fin n → Bool`, reversible functions use `Equiv.Perm`, and generic indexed
   variants support typed reindexing and product operations.
@@ -100,8 +100,8 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Three-bit Toffoli universality is represented by `CleanRealizes` over an explicit auxiliary
   index type, then related separately to exact face restriction and semantic dummy deletion.  The
   verified construction has count `2 + (n-3)` and returns all auxiliaries clean.
-- Use mathlib's complex unit `Circle`.  The foundational Stage 7 leaf confirms its analytic
-  manifold/Lie-group API, analytic `Circle.exp`, and the angle convention `0,π ↦ 1,-1`.
+- The smooth implementation uses mathlib's complex unit `Circle`, its analytic manifold/Lie-group
+  API, analytic `Circle.exp`, and the angle convention `0,π ↦ 1,-1`.
 - Theorem 4.1 is existential in the connected manifold `M`; it does not claim extension over every connected manifold. Any generic-manifold strengthening must be stated separately and independently justified.
 - The paper's `ℝ/(2πℤ)` is modeled by complex `Circle`; `signal_exp` relates the angular
   selector to `(1-cos x)/2`, while the implementation avoids a quotient-representative lift.
@@ -111,147 +111,154 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   zero-fold product.  Arbitrary-coordinate assembly, projection, reindexing, atomic maps, and
   stable-face restriction are all proved for this representation.
 
-## Tentative Formalization Direction
+## Implemented Formalization Direction and Results
 
-Proceed in three dependency blocks:
+The implementation follows three completed dependency blocks:
 
-1. Finite core: finite Boolean words and permutations, component reindexing, restriction/extension operations, generalized Toffoli gates, atomic flips, and exact Gray-code decomposition.
-2. Discrete consequences: lower-arity parity obstruction and three-bit Toffoli universality with resource accounting for constants, ancillas, restrictions, and dummy deletion.
-3. Smooth layer: validate the explicit circle formula, choose a robust circle model, construct smooth involutions/diffeomorphisms, then prove the main extension theorem without conflating it with physical realization.
+1. The finite block defines indexed Boolean words and permutations, typed component operations,
+   generalized Toffoli gates, literal cube-edge swaps, and an exact Gray-path decomposition of
+   every finite Boolean permutation.
+2. The discrete consequence block proves the corrected lower-arity obstruction and qualified
+   three-bit universality with explicit constants, clean auxiliaries, face restriction, dummy
+   deletion, and exact resource counts.
+3. The smooth block uses recursive products of complex `Circle`, replaces the paper's invalid
+   iterated binary operation by a direct smooth control product, extends every atomic edge by a
+   diffeomorphism, composes those extensions for arbitrary permutations, and reconstructs the
+   qualified three-bit smooth theorem on a globally stable auxiliary face.
 
-This ordering is provisional. Source audit or mathlib constraints may require a different representation or theorem factorization.
+Finite and smooth extension objects remain separate and are related only by explicit
+interpolation predicates. Physical realizability remains outside the verified core.
 
 ## Compile-Time and Module-Graph Strategy
 
-`BUILD-PLAN.md` governs all stages that add Lean code. Before each stage, the stage file must classify each proposed declaration as low-level data/API, proof-side, diagnostic/audit, fallback, or temporary scaffolding and name the smallest build targets that cover it.
-
-The tentative namespace/module layout is deliberately layered. Heavy universal-decomposition proofs are separated from the cheap atomic-word interface so synthesis and smooth engines do not rebuild when Gray-code proofs change:
+`BUILD-PLAN.md` governs all Lean work. Each completed stage classified declarations by fanout and
+recorded the smallest focused build targets before implementation. The resulting module layout is:
 
 ```text
-Toffoli/
-  Bool/Defs.lean
-  Bool/Reindex.lean
-  Component/{Reindex,OneToOne,Face,Restriction,Dummy}.lean
-  Gate/{Toffoli,Wiring,Atomic}.lean
-  Cube/{Adjacency,Path}.lean
-  Perm/{AtomicWord,Transposition,Decomposition}.lean
-  Parity/{Lift,Toffoli,Obstruction}.lean
-  Synthesis/{Resources,Semantics,Gadgets,FromAtoms,ThreeBit}.lean
-  Smooth/Extension/{Defs,Compose,FromAtoms}.lean
-  Smooth/Circle/{Model,Control,Toffoli,Atoms,Extension}.lean
-  Smooth/Synthesis/{Lift,ThreeBit}.lean
-  Audit/*.lean
+Bool/{Defs,Finite,Reindex}
+  → Component/{Tensor,Face,Restriction,Dummy,OneToOne}
+  → Gate/{Toffoli,AndNand,Wiring,Atomic} + Cube/{Basic,Path}
+  → Perm/{AtomicWord,Decomposition}
+      ├→ Parity/{Lift,Wiring,Generated,Obstruction,Paper}
+      └→ Circuit/{ThreeBit,ThreeBitLowering,ThreeBitTransport}
+          + Synthesis/{Resources,FaceRealization,Not,MultiControl,Atomic,Universality,Obstruction}
+
+Smooth/{CircleModel,CircleCoordinates,CircleGate,CircleAtomic,CircleReindex,
+        AtomicWord,Extension}
+  → Smooth/{UniversalLayout,UniversalFace,ThreeBitCircuit,ThreeBitStability}
+  → Smooth/Synthesis/{FlatCircuit,AtomicStability,Universality}
+
+Audit/{*Boundary,Axioms/*}
 ```
 
-This is a planning aid, not permission to create all modules preemptively. A stage should prefer one narrow leaf until real import or fanout pressure justifies splitting it. In particular:
+The implemented fanout boundaries are:
 
 - finite combinatorics must not import manifold modules;
 - cheap definitions and simp lemmas stay below heavy decomposition, parity, synthesis, and smooth proofs;
 - diagnostic computations, counterexamples, and `#print axioms` probes stay under `Toffoli/Audit/` and are never imported by public modules;
 - internal leaves import their exact dependencies, never a public facade or `Toffoli.lean`;
-- final public facades (`Toffoli.Bool`, `Toffoli.Gate`, `Toffoli.Decomposition`, `Toffoli.Parity`, `Toffoli.Synthesis`, and `Toffoli.Smooth`) remain thin; `Toffoli.lean` is an optional umbrella only;
-- `Perm.AtomicWord` exposes the cheap decomposition witness/interface; `Perm.Decomposition` proves universality, and only tiny final glue leaves combine it with synthesis or smooth “from atoms” engines;
+- public facades (`Toffoli.Bool`, `Toffoli.Gate`, `Toffoli.Decomposition`, `Toffoli.Parity`,
+  `Toffoli.Synthesis`, and `Toffoli.Smooth`) are thin; the root `Toffoli` facade intentionally
+  exports only the discrete library so ordinary users do not import manifold dependencies;
+- `Perm.AtomicWord` exposes the cheap endpoint-word interface; `Perm.Decomposition` proves
+  arbitrary-permutation decomposition, and terminal glue leaves combine it with the synthesis and
+  smooth atomic-word engines;
 - focused leaf builds and necessary adjacent-consumer builds are the default;
 - a full project build is reserved for build-configuration, public/high-fanout API, global notation/instance/simp changes, explicit milestone verification, and final integration.
 
-## Proposed Library and Theorem Outline
+## Implemented Library and Theorem Inventory
 
-Names below are design targets, not existing declarations. Final names should follow mathlib conventions and may change after API reconnaissance.
+The following are implemented declarations in the pinned project.
 
 ### Finite objects and component structure
 
-- `BoolWord (ι)` or direct use of `ι → Bool`.
-- `BoolPerm ι := Equiv.Perm (ι → Bool)`.
-- coordinate reindexing equivalences induced by `ι ≃ κ`.
-- ordinary equivalence composition and a separately typed one-to-one circuit/wiring derivation, with an evaluator into ordinary composition.
-- component support/dependence predicates.
-- fixing selected input coordinates.
-- restriction to a face of a Boolean cube, including a closure condition ensuring the result is a permutation when required.
-- extension by identity/dummy coordinates.
-- canonical deletion of singleton factors after face restriction.
-- semantic deletion of Boolean outputs, only with an explicit constancy/dummy certificate; this is distinct from singleton-factor deletion.
+- `BoolWord`, `BoolVec`, `BoolPerm`, and `BoolPermN` model indexed words and permutations;
+  `BoolWord.reindex`, `BoolPerm.reindex`, and `BoolPerm.coordinatePerm` model coordinate changes.
+- `BoolPerm.tensor` and `BoolPerm.extendRight` model disjoint extension, while
+  `OneToOneCircuit` is separate typed syntax with evaluator `OneToOneCircuit.eval`.
+- `Face`, `Face.Mem`, `restrictFaces`, and `restrictFace` encode fixed-coordinate faces and the
+  closure evidence needed to restrict a permutation.
+- `Component.fixRightEquiv` removes a singleton factor canonically; `RightDummy` and
+  `RightDummy.deleteRight` require an explicit semantic constancy certificate before output
+  deletion.
 
 ### Gate family and decomposition
 
-- generalized Toffoli gate with controls and one target.
-- proofs that the gate is an involution and therefore a permutation.
-- identification of AND/NAND component conventions.
-- atomic flip at a selected vertex and coordinate, stated as an edge transposition of the Boolean cube.
-- Gray-code path construction between two Boolean words.
-- decomposition of an arbitrary transposition using adjacent edge transpositions.
-- decomposition of an arbitrary Boolean permutation into atomic flips, with the exact multiplication/composition order specified.
+- `ToffoliGate`, `ToffoliGate.run_involutive`, and `ToffoliGate.perm` give a target-bearing
+  positive-control gate; `AndNand.thetaSucc` is the paper-indexed family.
+- `atomicEdge` is the literal cube-edge transposition, and the masked-NOT normalization theorems
+  identify every literal edge with a two-sided conjugate of the AND/NAND gate.
+- `GrayReachable`, `IsEndpointWord`, and `IsEndpointWord.eval_eq_swap` implement connectivity and
+  the checked Gray-path palindrome; `AtomicWord.exists_eval_eq` and
+  `AtomicWord.eval_decompose` give the exact decomposition of every finite Boolean permutation.
 
 ### Parity and universality
 
-- parity/sign of a permutation extended by dummy variables.
-- parity of a gate acting on fewer than all coordinates.
-- lower-arity non-generation theorem with every exceptional arity handled.
-- simulations of NOT and controlled-NOT from three-bit Toffoli using constants where justified.
-- synthesis of generalized Toffoli or atomic flips from three-bit Toffoli with explicitly counted ancillas/constants.
-- universality theorem stated via a closure relation that records fixed constants, component restriction, and deletion of dummy variables.
-- a separate negative or qualified statement preventing that theorem from being read as unrestricted ancilla-free universality.
+- `sign_extendRight`, `sign_extendRight_of_nonempty`, and the placement lemmas prove exact sign
+  accounting. `paperGenerated_le_evenSubgroup` handles ambient arity at least three;
+  `paperGenerated_*` and the global-complement invariant settle arities zero, one, and two.
+- `Synthesis.CleanRealizes`, `Synthesis.ThreeBitUniversal.circuit_cleanRealizes`,
+  `Synthesis.ThreeBitUniversal.circuit_restrictFaces_eq`, and
+  `Synthesis.ThreeBitUniversal.circuit_deleteRight_eq` state qualified universality with typed
+  constants, returned auxiliaries, restriction, and deletion.
+- `Synthesis.ThreeBitUniversal.circuit_aux_card*` proves the exact piecewise count and the
+  corrected paper bound; `Synthesis.oneAux_not_faceRealizes_twoBitDoubleNot` records the
+  two-data-bit one-auxiliary obstruction.
 
 ### Smooth extensions
 
-- an explicit Boolean embedding into the selected circle model.
-- a predicate saying a diffeomorphism extends a finite Boolean permutation on the embedded Boolean cube.
-- a documented correction replacing the paper's nonassociative binary circle multiplication by the direct finite smooth control product.
-- a smooth component gate extending the generalized Toffoli gate.
-- smoothness and involutive inverse proof, packaged as a diffeomorphism.
-- compatibility with reindexing and one-to-one component composition.
-- construction extending an arbitrary Boolean permutation by composing atomic smooth extensions.
-- the source-faithful existential circle theorem; any generic connected-manifold criterion is optional and separately hypothesized.
+- `CircleExtension.CirclePower`, `boolPoint`, `embed`, `signal`, and `controlProduct` implement the
+  recursive circle model, Boolean embedding, and corrected direct selector.
+- `gateDiffeomorph` extends `AndNand.thetaSucc`; `atomicDiffeomorph` extends every literal edge;
+  `Interpolates` states the finite/smooth relationship and `reindexDiffeomorph` transports layouts.
+- `CircleExtension.extension`, `extension_interpolates`, `exists_extension`, and
+  `connected_circle_witness` prove the source-faithful existential circle theorem, including
+  arity zero.
+- `CircleExtension.ThreeBitUniversal.ambient_preservesUniversalAux`,
+  `ambient_insert_eq_insert_restricted`, `restricted_interpolates`, and
+  `exists_qualified_smooth_realization` prove the smooth qualified
+  three-bit theorem on the whole stable auxiliary face.
 
 ### Audit declarations and generated reports
 
-- a paper-claim table linking each main claim to definitions/theorems and verification status.
-- an axiom audit for exported main theorems using `#print axioms` or a maintained equivalent.
-- executable small-arity examples where useful, without treating them as substitutes for proofs.
+- This paper map and the correction log link each main claim to its verified theorem or explicit
+  exclusion.
+- `Toffoli.Audit.Axioms.*` runs `#print axioms` on representative exported theorems, and
+  `Toffoli.Audit.*Boundary` checks empty/low-arity behavior and exact composition conventions.
 
-## Tentative Main-Theorem Dependency Graph
+## Verified Main-Theorem Dependency Graph
 
 ```text
-finite indices + Boolean words
+`BoolWord` / `BoolPerm` + component APIs
         |
-        +--> component reindexing / one-to-one circuit semantics
+        +--> `ToffoliGate` + placement --> sign lemmas --> corrected parity obstruction
         |
-        +--> generalized Toffoli involutions
-        |            |
-        |            +--> lifted-gate sign --> lower-arity obstruction
-        |
-        +--> cube adjacency + Gray paths --> atomic-word interface
-                         |                         |
-                         |                         +--> synthesis from atoms
-                         |                         +--> smooth extension from atoms
-                         |
-                         +--> heavy universal decomposition
-                                      |
-                                      +--> tiny discrete universality glue theorem
-                                      +--> tiny smooth extension glue theorem
-
-restriction + constants + dummy extension/deletion
-        |
-        +--> exact three-bit Toffoli simulations
-                         |
-                         +--> qualified three-bit universality
-
-analytic complex Circle + Boolean embedding
-        |
-        +--> well-defined smooth atomic gate diffeomorphism
-                         |
-                         +--> compatibility with finite atomic flips
-                                      |
-                                      +--> main diffeomorphic extension theorem
+        +--> cube paths --> `AtomicWord` --> `AtomicWord.exists_eval_eq`
+                              |                         |
+                              |                         +--> discrete three-bit compiler
+                              |                                  |
+                              |                                  +--> clean face universality
+                              |
+complex `Circle` --> coordinates + atomic diffeomorphisms
+                              |
+                              +--> atomic-word composition --> `exists_extension`
+                              |
+discrete compiler + smooth placed gates + global auxiliary stability
+                              |
+                              +--> stable-face restriction
+                                       |
+                                       +--> `exists_qualified_smooth_realization`
 ```
 
 ## Paper Map
 
-The source is present under `toffoli-1981/`. Printed pages below were checked against the supplied scan; declaration-level Lean links will be added as implementation proceeds.
+The source is present under `toffoli-1981/`. Printed pages below were checked against the supplied
+scan; each in-scope main claim has a Lean artifact or an explicit out-of-scope disposition.
 
-| Paper location and claim | Proposed Lean artifact | Dependency | Planned disposition |
+| Paper location and claim | Lean artifact | Dependency | Disposition |
 |---|---|---|---|
 | Printed pp. 14–15, Goal 2.1: extend an invertible `Bⁿ → Bⁿ` over some connected `M` | `CircleExtension.Interpolates`, `exists_extension`, `connected_circle_witness` | smooth atomic gates, decomposition | Verified as an existential circle theorem; no physical interpretation or every-connected-manifold strengthening |
-| Printed pp. 15–16, §§2–3: componentwise extension/restriction | `Component.Face`, `restrictFaces`, `CircleExtension.insertUniversal`, `restrictUniversal` | indexed products, explicit Boolean embedding | Verified with typed faces; “componentwise” does not impose false coordinatewise independence |
+| Printed pp. 15–16, §§2–3: componentwise extension/restriction | `Face`, `restrictFaces`, `CircleExtension.insertUniversal`, `restrictUniversal` | indexed products, explicit Boolean embedding | Verified with typed faces; “componentwise” does not impose false coordinatewise independence |
 | Printed p. 16, §3: one-to-one composition and reindexing | `OneToOneCircuit`, `ThreeBitCircuit.reindex`, smooth `reindexDiffeomorph` | finite equivalences | Verified separately from ordinary semantic composition |
 | Printed p. 16, §3: deletion of singleton-valued dummy variables | `Component.fixRightEquiv`, `RightDummy.deleteRight`, `projectUniversal` under face stability | product decompositions | Verified in three deliberately distinct APIs |
 | Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | `ToffoliGate`, `ToffoliGate.perm`, `AndNand.thetaSucc`, component and AND/NAND lemmas | finite controls/target | Verified for every positive order; no order-zero member; `n=1,2,3` conventions checked |
@@ -259,15 +266,15 @@ The source is present under `toffoli-1981/`. Printed pages below were checked ag
 | Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | `CircleExtension.gateDiffeomorph`, `gate_interpolates_thetaSucc` | analytic `Circle`, recursive products, direct finite control product | Corrected and verified for every positive order, including zero controls/NOT |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | `extension_interpolates`, `exists_extension`, `connected_circle_witness` | atomic circle extensions, `AtomicWord.decompose` | Corrected construction verified without physical interpretation |
 | Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | `sign_extendRight`, `paperGenerated_le_evenSubgroup`, low-arity theorems | sign, explicit proper placement, coordinate wiring | Corrected and verified: parity for `n≥3`; separate complement invariant at `n=2`; trivial `n=1`; false existential conclusion at `n=0` |
-| Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | `MultiControl.figureSeven_apply`, `ThreeBitUniversal.circuit_cleanRealizes`, `circuit_restrictFaces_eq`, `circuit_deleteRight_eq` | clean-ancilla recursion, atomic decomposition, dummy operations | Corrected and verified; exact count `2+(n-3)`, paper bound only for `n≥3` |
-| Printed p. 21, Theorem 5.3: smooth analogue using `Θ⁽³⁾` | `ambient_preservesUniversalAux`, `restricted_interpolates`, `exists_qualified_smooth_realization` | placed circle gate, structural compiler stability, Theorem 5.2 | Reconstructed and verified with explicit constants, face restriction, deletion, and resource qualification; no off-cube higher-gate equality |
-| Printed pp. 18–20 mechanisms and pp. 21–23 Appendix/energy interpretation | documentation-only boundary | explicit physical model, if ever added | Exclude from verified core by default |
+| Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | `Synthesis.MultiControl.figureSeven_apply`, `Synthesis.ThreeBitUniversal.circuit_cleanRealizes`, `circuit_restrictFaces_eq`, `circuit_deleteRight_eq` | clean-ancilla recursion, atomic decomposition, dummy operations | Corrected and verified; exact count `2+(n-3)`, paper bound only for `n≥3` |
+| Printed p. 21, Theorem 5.3: smooth analogue using `Θ⁽³⁾` | `CircleExtension.ThreeBitUniversal.ambient_preservesUniversalAux`, `restricted_interpolates`, `exists_qualified_smooth_realization` | placed circle gate, structural compiler stability, Theorem 5.2 | Reconstructed and verified with explicit constants, face restriction, deletion, and resource qualification; no off-cube higher-gate equality |
+| Printed pp. 18–20 mechanisms and pp. 21–23 Appendix/energy interpretation | documentation-only boundary | an explicit physical model | Excluded from the verified core; no physical model is formalized |
 
-## Initial Correction and Unresolved-Point Log
+## Correction and Resolution Log
 
-This is an audit queue, not a finding that the paper is wrong. Every entry must later acquire a source location, evidence, and final disposition.
+Each entry records its source issue, mathematical risk, required evidence, and verified disposition.
 
-| ID | Issue to investigate | Risk | Required evidence before closure | Status |
+| ID | Source issue | Mathematical risk | Verification criterion | Disposition |
 |---|---|---|---|---|
 | C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2`; document the counterexample `(π/2 ∘ π/2) ∘ π ≠ π/2 ∘ (π/2 ∘ π)` | Resolved by corrected construction: `controlProduct` is a direct finite product; `signal_exp` records the angular formula. The false ring claim is rejected |
 | C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Resolved for the corrected formula by `gate_involutive`, `contMDiff_gate`, `gate_bijective`, and `gateDiffeomorph`; zero controls use empty product `1` |
@@ -338,15 +345,15 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   `propext`, `Classical.choice`, and `Quot.sound`.  The discrete root deliberately remains free of
   manifold imports.
 
-### Expected mathlib areas to investigate
+### Mathlib reconnaissance disposition
 
-- `Equiv.Perm`, finite permutations, transpositions, sign/parity, and generation.
-- `Fin`, `Fintype`, `Finite`, finite function types, `Bool`, vectors, and cardinality lemmas.
-- finite sets and coordinate-support APIs.
-- Gray codes or hypercube paths, if present; otherwise a local reusable construction.
-- products, Pi types, and reindexing equivalences.
-- smooth manifolds, `ContMDiff`, smooth maps, Lie groups, circles/real modulo subgroups, and diffeomorphisms.
-- quotient-lift APIs if the paper's angular formula is retained.
+- The finite implementation uses mathlib permutations, sign, finite-cardinality, product, and
+  reindexing APIs listed below.
+- No ready-made Gray-path decomposition matched the required exact word, so `Cube.Path` and
+  `Perm.AtomicWord` supply the local reusable construction.
+- The smooth implementation uses complex `Circle` and recursive binary products. It does not
+  define an angular quotient lift, so no quotient-representative well-definedness assumption is
+  present in the verified construction.
 
 ### Confirmed pinned mathlib surfaces
 
@@ -354,7 +361,8 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 - `Mathlib.GroupTheory.Perm.Sign`: `Equiv.Perm.sign`, `sign_swap`, conjugation invariance, product-congruence sign lemmas, and transposition factorization/induction.
 - `Mathlib.Logic.Equiv.Basic` and `.Prod`: Pi reindexing plus dependent/product congruences.
 - `Mathlib.Data.Fintype.Card` and `.BigOperators`: `Fintype.card_bool` and `Fintype.card_fun`.
-- `Mathlib.InformationTheory.Hamming`: Hamming distance exists, but no ready-made Gray-path decomposition was found; a narrow local cube-path construction is still expected.
+- `Mathlib.InformationTheory.Hamming` was inspected, but the exact decomposition is implemented
+  locally in `Toffoli.Cube.Path` and `Toffoli.Perm.AtomicWord`.
 - `Mathlib.Analysis.Complex.Circle` and `Mathlib.Geometry.Manifold.Instances.Sphere`: complex unit `Circle`, analytic manifold/Lie-group instances, analytic `Circle.exp`, and the distinct Boolean points `1` and `Circle.exp π = -1`.
 - `Mathlib.Analysis.SpecialFunctions.Complex.Circle`: `AddCircle.homeomorphCircle'` relates `AddCircle (2 * π)` to complex `Circle` and sends quotient representatives to `Circle.exp`.
 - `Mathlib.Geometry.Manifold.Diffeomorph`: the smooth diffeomorphism structure and product constructions.
@@ -409,7 +417,8 @@ Establish a source-grounded, reproducible formalization baseline before mathemat
 - Separate claims into discrete combinatorics, smooth topology/geometry, and informal physical assertions.
 - Inspect candidate Lean/mathlib versions and relevant APIs.
 - Select and pin compatible Lean/mathlib versions; initialize the minimal Lake project and a namespaced smoke import.
-- Adapt the tentative low-fanout module graph to the APIs actually available; record focused build targets and avoid importing a broad mathlib umbrella where narrow imports suffice.
+- Adapt the low-fanout module graph to the APIs actually available; record focused build targets
+  and avoid importing a broad mathlib umbrella where narrow imports suffice.
 - Record source ambiguity and suspected missing assumptions in the correction log without prematurely resolving them.
 
 #### Completion Requirements
