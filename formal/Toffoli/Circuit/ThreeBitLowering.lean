@@ -12,7 +12,7 @@ instruction as identity extension followed by coordinate reindexing.
 
 namespace Toffoli
 
-universe u
+universe u v w
 
 namespace ThreeBitInstruction
 
@@ -37,12 +37,11 @@ theorem placementEquiv_apply_inr (g : ThreeBitInstruction ι) (i : g.Complement)
     g.placementEquiv (Sum.inr i) = i :=
   rfl
 
-private theorem map_map {a b c : Type u} (first : a ↪ b) (second : b ↪ c)
+private theorem map_map {a : Type u} {b : Type v} {c : Type w} (first : a ↪ b) (second : b ↪ c)
     (gate : ToffoliGate a) :
     (gate.map first).map second = gate.map (first.trans second) := by
-  apply ToffoliGate.ext
-  · simp [ToffoliGate.map, Finset.map_map]
-  · rfl
+  cases gate
+  simp [ToffoliGate.map, Finset.map_map]
 
 private theorem inl_trans_placementEquiv (g : ThreeBitInstruction ι) :
     Function.Embedding.inl.trans g.placementEquiv.toEmbedding = g.placement := by
@@ -51,7 +50,8 @@ private theorem inl_trans_placementEquiv (g : ThreeBitInstruction ι) :
 
 /-- At the specification level, placement is canonical left-summand extension plus reindexing. -/
 theorem gate_eq_map_inl (g : ThreeBitInstruction ι) :
-    g.gate = ((AndNand.thetaSuccSpec 2).inl (g.Complement)).map g.placementEquiv.toEmbedding := by
+    g.gate = ((AndNand.thetaSuccSpec 2).inl (κ := g.Complement)).map
+      g.placementEquiv.toEmbedding := by
   rw [ToffoliGate.inl, map_map, inl_trans_placementEquiv]
   rfl
 
@@ -59,21 +59,28 @@ theorem gate_eq_map_inl (g : ThreeBitInstruction ι) :
 theorem perm_eq_reindex_extendRight (g : ThreeBitInstruction ι) :
     g.perm = BoolPerm.reindex g.placementEquiv
       (BoolPerm.extendRight (AndNand.thetaSucc 2) g.Complement) := by
-  rw [← ToffoliGate.perm_inl (g := AndNand.thetaSuccSpec 2)]
-  rw [← ToffoliGate.perm_map_equiv]
-  exact congrArg ToffoliGate.perm g.gate_eq_map_inl
+  calc
+    g.perm = (((AndNand.thetaSuccSpec 2).inl (κ := g.Complement)).map
+        g.placementEquiv.toEmbedding).perm := congrArg ToffoliGate.perm g.gate_eq_map_inl
+    _ = BoolPerm.reindex g.placementEquiv
+        ((AndNand.thetaSuccSpec 2).inl (κ := g.Complement)).perm :=
+      ToffoliGate.perm_map_equiv g.placementEquiv _
+    _ = BoolPerm.reindex g.placementEquiv
+        (BoolPerm.extendRight (AndNand.thetaSucc 2) g.Complement) := by
+      rw [ToffoliGate.perm_inl]
+      rfl
 
 end ThreeBitInstruction
 
 /-- The sole primitive family used by lowered circuits.  It has exactly one constructor, at the
 canonical three-coordinate index type. -/
-inductive CanonicalThreeBitAtom : Type u → Type u
+inductive CanonicalThreeBitAtom : Type → Type
   | gate : CanonicalThreeBitAtom (Fin 3)
 
 namespace CanonicalThreeBitAtom
 
 /-- Interpret the sole primitive as the paper's canonical three-bit Toffoli permutation. -/
-def eval : {ι : Type u} → CanonicalThreeBitAtom ι → BoolPerm ι
+def eval : {ι : Type} → CanonicalThreeBitAtom ι → BoolPerm ι
   | _, .gate => AndNand.thetaSucc 2
 
 @[simp]
@@ -84,7 +91,7 @@ end CanonicalThreeBitAtom
 
 namespace ThreeBitLowering
 
-variable {ι : Type u} [DecidableEq ι]
+variable {ι : Type} [DecidableEq ι]
 
 /-- Lower one placed instruction using a canonical primitive, identity extension, and reindexing. -/
 def lowerInstruction (gate : ThreeBitInstruction ι) :
