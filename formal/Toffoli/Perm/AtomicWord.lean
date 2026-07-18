@@ -1,4 +1,5 @@
 import Toffoli.Cube.Path
+import Toffoli.Gate.Atomic
 
 /-!
 # Serial words of atomic Boolean edge permutations
@@ -83,6 +84,17 @@ private theorem swap_palindrome {α : Type*} [DecidableEq α] (x z y : α)
     Equiv.swap_apply_of_ne_of_ne hxy.symm hzy.symm
   simpa [hy] using Equiv.symm_trans_swap_trans z y (Equiv.swap x z)
 
+omit [DecidableEq (BoolWord ι)] in
+/-- An endpoint-word derivation contains a Gray path from its first endpoint to its second. -/
+theorem reachable {x y : BoolWord ι} {word : List (AtomicStep ι)}
+    (h : IsEndpointWord x y word) : GrayReachable x y := by
+  induction h with
+  | refl x => exact Relation.ReflTransGen.refl
+  | edge x target => exact Relation.ReflTransGen.single (CubeAdjacent.flipAt x target)
+  | @palindrome x z y target middle hz hxy hzy inner ih =>
+      cases hz
+      exact Relation.ReflTransGen.head (CubeAdjacent.flipAt x target) ih
+
 /-- Every endpoint-word derivation evaluates to the literal transposition of its endpoints. -/
 theorem eval_eq_swap {x y : BoolWord ι} {word : List (AtomicStep ι)}
     (h : IsEndpointWord x y word) : AtomicWord.eval word = Equiv.swap x y := by
@@ -95,8 +107,8 @@ theorem eval_eq_swap {x y : BoolWord ι} {word : List (AtomicStep ι)}
       rw [AtomicWord.eval_append, AtomicWord.eval_singleton, ih, ← Equiv.trans_assoc]
       exact swap_palindrome x (x.flipAt target) y hxy hzy
 
-/-- A Gray-path palindrome exists between every two vertices of a finite Boolean cube. -/
 omit [DecidableEq (BoolWord ι)] in
+/-- A Gray-path palindrome exists between every two vertices of a finite Boolean cube. -/
 theorem exists_word [Finite ι] (x y : BoolWord ι) : ∃ word, IsEndpointWord x y word := by
   classical
   letI := Fintype.ofFinite ι
@@ -122,8 +134,8 @@ theorem exists_word [Finite ι] (x y : BoolWord ι) : ∃ word, IsEndpointWord x
             ⟨⟨x, target⟩ :: (middle ++ [⟨x, target⟩]),
               IsEndpointWord.palindrome rfl hxy hzy hmiddle⟩
 
-/-- A chosen endpoint word, useful as a reusable decomposition witness. -/
 omit [DecidableEq (BoolWord ι)] in
+/-- A chosen endpoint word, useful as a reusable decomposition witness. -/
 noncomputable def word [Finite ι] (x y : BoolWord ι) : List (AtomicStep ι) :=
   (exists_word x y).choose
 

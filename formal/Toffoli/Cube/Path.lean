@@ -1,7 +1,7 @@
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Fintype.EquivFin
 import Mathlib.Logic.Relation
-import Toffoli.Gate.Atomic
+import Toffoli.Cube.Basic
 
 /-!
 # Boolean-cube paths
