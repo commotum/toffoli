@@ -244,6 +244,22 @@ def PreservesUniversalAux (n : ℕ)
       coord (n + auxCount n) (F p) (flatWorkIndex i) =
         coord (n + auxCount n) p (flatWorkIndex i))
 
+/-- The identity map preserves the entire universal auxiliary bank. -/
+theorem preservesUniversalAux_id (n : ℕ) :
+    PreservesUniversalAux n (fun p : CirclePower (n + auxCount n) => p) := by
+  constructor <;> intros <;> rfl
+
+/-- Global auxiliary preservation is closed under head-first serial composition. -/
+theorem PreservesUniversalAux.serial {n : ℕ}
+    {F G : CirclePower (n + auxCount n) → CirclePower (n + auxCount n)}
+    (hF : PreservesUniversalAux n F) (hG : PreservesUniversalAux n G) :
+    PreservesUniversalAux n (fun p => G (F p)) := by
+  constructor
+  · intro p i
+    rw [hG.1 (F p) i, hF.1 p i]
+  · intro p i
+    rw [hG.2 (F p) i, hF.2 p i]
+
 theorem PreservesUniversalAux.mapsUniversalFace {n : ℕ}
     {F : CirclePower (n + auxCount n) → CirclePower (n + auxCount n)}
     (hF : PreservesUniversalAux n F) : MapsUniversalFace n F := by

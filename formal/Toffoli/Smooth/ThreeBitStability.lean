@@ -163,6 +163,22 @@ theorem coord_evalThreeBitWord_of_avoids {n : ℕ}
       rw [ih (threeBitMap instruction p) hword]
       exact coord_threeBitMap_of_ne instruction p ht
 
+/-- A coordinate that is never targeted is unchanged by the smooth word, even when gates read it
+as a control.  This is deliberately weaker than `ThreeBitWordAvoids` and is the right criterion
+for persistent enable coordinates. -/
+theorem coord_evalThreeBitWord_of_forall_ne_target {n : ℕ}
+    (word : List (ThreeBitInstruction (Fin n))) (p : CirclePower n) (q : Fin n)
+    (h : ∀ instruction ∈ word, q ≠ instruction.target) :
+    coord n (evalThreeBitWord word p) q = coord n p q := by
+  induction word generalizing p with
+  | nil => rfl
+  | cons instruction word ih =>
+      change coord n (evalThreeBitWord word (threeBitMap instruction p)) q = coord n p q
+      rw [ih]
+      · exact coord_threeBitMap_of_ne instruction p (h instruction (by simp))
+      · intro next hnext
+        exact h next (by simp [hnext])
+
 /-! ## Transport along coordinate equivalences -/
 
 @[simp]
@@ -257,42 +273,42 @@ def ChangesOnlyAt {n : ℕ} (F : CirclePower n → CirclePower n) (q : Fin n) : 
 and the middle gate targets `q`, then uncomputation restores every other coordinate and leaves
 only the newly computed target value at `q`. -/
 theorem evalThreeBitWord_append_cons_reverse_eq_replaceCoord {n : ℕ}
-    (prefix : List (ThreeBitInstruction (Fin n)))
+    (compute : List (ThreeBitInstruction (Fin n)))
     (instruction : ThreeBitInstruction (Fin n)) (p : CirclePower n) (q : Fin n)
-    (hprefix : ThreeBitWordAvoids prefix q) (htarget : instruction.target = q) :
-    evalThreeBitWord (prefix ++ instruction :: prefix.reverse) p =
+    (hcompute : ThreeBitWordAvoids compute q) (htarget : instruction.target = q) :
+    evalThreeBitWord (compute ++ instruction :: compute.reverse) p =
       replaceCoord p q
-        (coord n (threeBitMap instruction (evalThreeBitWord prefix p)) q) := by
+        (coord n (threeBitMap instruction (evalThreeBitWord compute p)) q) := by
   calc
-    evalThreeBitWord (prefix ++ instruction :: prefix.reverse) p =
-        evalThreeBitWord prefix.reverse
-          (threeBitMap instruction (evalThreeBitWord prefix p)) := by
+    evalThreeBitWord (compute ++ instruction :: compute.reverse) p =
+        evalThreeBitWord compute.reverse
+          (threeBitMap instruction (evalThreeBitWord compute p)) := by
       rw [evalThreeBitWord_append]
       rfl
-    _ = evalThreeBitWord prefix.reverse
-          (replaceCoord (evalThreeBitWord prefix p) q
-            (coord n (threeBitMap instruction (evalThreeBitWord prefix p)) q)) := by
+    _ = evalThreeBitWord compute.reverse
+          (replaceCoord (evalThreeBitWord compute p) q
+            (coord n (threeBitMap instruction (evalThreeBitWord compute p)) q)) := by
       congr 1
       simpa [htarget] using
-        threeBitMap_eq_replaceCoord_target instruction (evalThreeBitWord prefix p)
+        threeBitMap_eq_replaceCoord_target instruction (evalThreeBitWord compute p)
     _ = replaceCoord
-          (evalThreeBitWord prefix.reverse (evalThreeBitWord prefix p)) q
-          (coord n (threeBitMap instruction (evalThreeBitWord prefix p)) q) :=
-      evalThreeBitWord_replaceCoord prefix.reverse (evalThreeBitWord prefix p) q _
-        ((threeBitWordAvoids_reverse prefix q).2 hprefix)
+          (evalThreeBitWord compute.reverse (evalThreeBitWord compute p)) q
+          (coord n (threeBitMap instruction (evalThreeBitWord compute p)) q) :=
+      evalThreeBitWord_replaceCoord compute.reverse (evalThreeBitWord compute p) q _
+        ((threeBitWordAvoids_reverse compute q).2 hcompute)
     _ = replaceCoord p q
-          (coord n (threeBitMap instruction (evalThreeBitWord prefix p)) q) := by
+          (coord n (threeBitMap instruction (evalThreeBitWord compute p)) q) := by
       simp
 
 /-- The compute/act/uncompute word in the preceding theorem changes at most its middle target. -/
 theorem evalThreeBitWord_append_cons_reverse_changesOnlyAt {n : ℕ}
-    (prefix : List (ThreeBitInstruction (Fin n)))
+    (compute : List (ThreeBitInstruction (Fin n)))
     (instruction : ThreeBitInstruction (Fin n)) (q : Fin n)
-    (hprefix : ThreeBitWordAvoids prefix q) (htarget : instruction.target = q) :
-    ChangesOnlyAt (evalThreeBitWord (prefix ++ instruction :: prefix.reverse)) q := by
+    (hcompute : ThreeBitWordAvoids compute q) (htarget : instruction.target = q) :
+    ChangesOnlyAt (evalThreeBitWord (compute ++ instruction :: compute.reverse)) q := by
   intro p i hi
-  rw [evalThreeBitWord_append_cons_reverse_eq_replaceCoord prefix instruction p q
-    hprefix htarget]
+  rw [evalThreeBitWord_append_cons_reverse_eq_replaceCoord compute instruction p q
+    hcompute htarget]
   exact coord_replaceCoord_of_ne p q _ hi
 
 /-- If every instruction targets `q`, then the whole word changes at most `q`. -/
