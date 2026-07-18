@@ -81,6 +81,30 @@ theorem exists_circuit_cleanRealizes {n : ℕ} (p : BoolPermN n) :
         (universalConstants n) p :=
   ⟨circuit p, circuit_cleanRealizes p⟩
 
+/-- The auxiliary type appearing in the main theorem has exactly the documented piecewise
+resource count. -/
+theorem circuit_aux_card (n : ℕ) :
+    Fintype.card (UniversalAux n) = auxCount n :=
+  card_universalAux n
+
+/-- The uniform bank has two enable bits at arities at most three; the separate zero-arity theorem
+below removes even those when no data coordinate exists. -/
+theorem circuit_aux_card_eq_two {n : ℕ} (h : n ≤ 3) :
+    Fintype.card (UniversalAux n) = 2 := by
+  rw [circuit_aux_card, auxCount_eq_two h]
+
+/-- From arity three onward, the construction uses exactly `n - 1` shared clean auxiliaries. -/
+theorem circuit_aux_card_eq_sub_one {n : ℕ} (h : 3 ≤ n) :
+    Fintype.card (UniversalAux n) = n - 1 := by
+  rw [circuit_aux_card, auxCount_eq_sub_one h]
+
+/-- Consequently the verified construction satisfies the paper's `2n - 3` upper bound in its
+valid range `n ≥ 3`.  The low-arity correction is intentionally not hidden by this wrapper. -/
+theorem circuit_aux_card_le_paper_bound {n : ℕ} (h : 3 ≤ n) :
+    Fintype.card (UniversalAux n) ≤ 2 * n - 3 := by
+  rw [circuit_aux_card]
+  exact auxCount_le_two_mul_sub_three h
+
 /-- The universal circuit maps the fixed clean face exactly onto itself. -/
 theorem circuit_maps_faces {n : ℕ} (p : BoolPermN n)
     (x : BoolWord (UniversalIndex n)) :

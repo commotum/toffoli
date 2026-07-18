@@ -2,6 +2,7 @@ import Mathlib.Data.List.OfFn
 import Toffoli.Circuit.ThreeBit
 import Toffoli.Cube.Basic
 import Toffoli.Synthesis.FaceRealization
+import Toffoli.Synthesis.Not
 import Toffoli.Synthesis.Resources
 
 /-!
@@ -43,8 +44,7 @@ theorem inputState_work {n : ℕ} (x : BoolVec n) (i : Fin (n - 3)) :
 
 /-- The three-bit instruction implementing NOT on the sole data bit. -/
 def notInstruction : ThreeBitInstruction (UniversalIndex 1) :=
-  ThreeBitInstruction.ofDistinct (enableIndex 0) (enableIndex 1) (dataIndex 0)
-    (by simp [enableIndex]) (by simp [enableIndex, dataIndex]) (by simp [enableIndex, dataIndex])
+  Toffoli.Synthesis.notInstruction 0
 
 /-- The three-bit instruction implementing CNOT on two data bits. -/
 def cnotInstruction : ThreeBitInstruction (UniversalIndex 2) :=
@@ -493,6 +493,102 @@ def word : (n : ℕ) → List (ThreeBitInstruction (UniversalIndex n))
 /-- Ambient permutation evaluated from the explicit left-to-right circuit word. -/
 def perm (n : ℕ) : BoolPerm (UniversalIndex n) :=
   ThreeBitCircuit.eval (word n)
+
+theorem eval_word_one_apply (x : BoolVec 1) :
+    ThreeBitCircuit.eval (word 1) (inputState x) =
+      inputState (AndNand.thetaSucc 0 x) := by
+  rw [show word 1 = [notInstruction] by rfl, ThreeBitCircuit.eval_singleton]
+  rw [show notInstruction = Toffoli.Synthesis.notInstruction 0 by rfl]
+  simp only [inputState]
+  rw [Toffoli.Synthesis.notInstruction_apply]
+  rw [thetaSucc_apply_eq_if_flip]
+  simp
+
+theorem eval_word_two_apply (x : BoolVec 2) :
+    ThreeBitCircuit.eval (word 2) (inputState x) =
+      inputState (AndNand.thetaSucc 1 x) := by
+  rw [show word 2 = [cnotInstruction] by rfl, ThreeBitCircuit.eval_singleton]
+  funext i
+  cases i with
+  | inl j =>
+      refine Fin.cases ?_ (fun j => ?_) j
+      · change cnotInstruction.perm (inputState x) (dataIndex 0) = _
+        rw [show dataIndex (0 : Fin 2) = cnotInstruction.control₁ by
+          simp [cnotInstruction, dataIndex]]
+        rw [cnotInstruction.perm_apply_control₁]
+        change x 0 = AndNand.thetaSucc 1 x 0
+        exact (AndNand.thetaSucc_apply_control 1 x 0).symm
+      · have hj : j = 0 := Subsingleton.elim _ _
+        subst j
+        change cnotInstruction.perm (inputState x) (dataIndex 1) = _
+        rw [show dataIndex (1 : Fin 2) = cnotInstruction.target by
+          simp [cnotInstruction, dataIndex]]
+        rw [cnotInstruction.perm_apply_target]
+        simp only [cnotInstruction, ThreeBitInstruction.ofDistinct_control₁,
+          ThreeBitInstruction.ofDistinct_control₂, ThreeBitInstruction.ofDistinct_target,
+          inputState_data, inputState_enable, and_true]
+        change (if x 0 = true then !x 1 else x 1) = AndNand.thetaSucc 1 x (Fin.last 1)
+        rw [AndNand.thetaSucc_apply_target]
+        simp [Fin.forall_fin_one]
+  | inr aux =>
+      rw [cnotInstruction.perm_apply_of_ne_target]
+      · rfl
+      · simp [cnotInstruction, dataIndex]
+
+theorem eval_word_three_apply (x : BoolVec 3) :
+    ThreeBitCircuit.eval (word 3) (inputState x) =
+      inputState (AndNand.thetaSucc 2 x) := by
+  rw [show word 3 = [threeInstruction] by rfl, ThreeBitCircuit.eval_singleton]
+  funext i
+  cases i with
+  | inl j =>
+      by_cases hj : j = Fin.last 2
+      · subst j
+        change threeInstruction.perm (inputState x) (dataIndex (Fin.last 2)) = _
+        rw [show dataIndex (Fin.last 2) = threeInstruction.target by
+          simp [threeInstruction, dataIndex]]
+        rw [threeInstruction.perm_apply_target]
+        simp only [threeInstruction, ThreeBitInstruction.ofDistinct_control₁,
+          ThreeBitInstruction.ofDistinct_control₂, ThreeBitInstruction.ofDistinct_target,
+          inputState_data]
+        rw [AndNand.thetaSucc_apply_target]
+        simp [Fin.forall_fin_two]
+      · obtain ⟨j, rfl⟩ := Fin.eq_castSucc_of_ne_last hj
+        rw [threeInstruction.perm_apply_of_ne_target]
+        · change x j.castSucc = AndNand.thetaSucc 2 x j.castSucc
+          exact (AndNand.thetaSucc_apply_control 2 x j).symm
+        · simp [threeInstruction, dataIndex, Fin.castSucc_ne_last]
+  | inr aux =>
+      rw [threeInstruction.perm_apply_of_ne_target]
+      · rfl
+      · simp [threeInstruction, dataIndex]
+
+theorem eval_word_add_four_apply (k : ℕ) (x : BoolVec (k + 4)) :
+    ThreeBitCircuit.eval (word (k + 4)) (inputState x) =
+      inputState (AndNand.thetaSucc (k + 3) x) := by
+  rw [show word (k + 4) =
+      computeWord k ++ targetInstruction k :: (computeWord k).reverse by rfl]
+  rw [ThreeBitCircuit.eval_append]
+  change ThreeBitCircuit.eval (computeWord k).reverse
+      ((targetInstruction k).perm (ThreeBitCircuit.eval (computeWord k) (inputState x))) = _
+  let state := ThreeBitCircuit.eval (computeWord k) (inputState x)
+  have hinvariant : PrefixInvariant k (k + 1) x state := eval_computeWord_invariant k x
+  have hrestore : ThreeBitCircuit.eval (computeWord k).reverse state = inputState x := by
+    rw [ThreeBitCircuit.eval_reverse]
+    exact (ThreeBitCircuit.eval (computeWord k)).symm_apply_apply (inputState x)
+  have hcommute (z : BoolWord (UniversalIndex (k + 4))) :
+      ThreeBitCircuit.eval (computeWord k).reverse
+          (z.flipAt (dataIndex (Fin.last (k + 3)))) =
+        (ThreeBitCircuit.eval (computeWord k).reverse z).flipAt
+          (dataIndex (Fin.last (k + 3))) := by
+    apply eval_flipAt_of_avoids
+    intro g hg
+    exact computeWord_avoids_final k g (by simpa using hg)
+  rw [targetInstruction_apply_of_invariant k x state hinvariant]
+  rw [thetaSucc_apply_eq_if_flip]
+  by_cases hall : ∀ i : Fin (k + 3), x i.castSucc = true
+  · rw [if_pos hall, if_pos hall, hcommute, hrestore, inputState_flipAt_data]
+  · rw [if_neg hall, if_neg hall, hrestore]
 
 end MultiControl
 
