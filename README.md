@@ -17,31 +17,76 @@ generalized Toffoli permutations, exact Gray/atomic decomposition, corrected low
 obstruction, clean resource-qualified three-bit universality, the corrected circle-valued smooth
 gate, a diffeomorphic circle extension of every finite Boolean permutation, and a qualified smooth
 three-bit realization with an explicitly stable auxiliary face.  Main-result axiom audits report
-only standard Lean/mathlib foundations.  Final integration and reproducibility review is in
-progress.
+only standard Lean/mathlib foundations.  The final integration build and structural audit pass;
+the final correction audit is pending.
 
 ## Lean setup
 
-The Lean project is isolated in `formal/` and pins Lean 4.32.0 plus an exact mathlib commit.
+The Lean project is isolated in `formal/` and pins Lean 4.32.0 plus an exact mathlib commit.  Fetch
+the pinned dependencies once with:
 
 ```text
 cd formal
 lake update
-lake build Toffoli.Smoke
-lake build Toffoli.Bool
-lake build Toffoli.Gate
-lake build Toffoli.Decomposition
-lake build Toffoli.Parity
-lake build Toffoli.Synthesis
-lake build Toffoli
-lake build Toffoli.Smooth
-lake build Toffoli.Audit.Axioms.SmoothExtension
-lake build Toffoli.Audit.Axioms.SmoothSynthesis
 ```
 
 Development follows [`BUILD-PLAN.md`](BUILD-PLAN.md): use narrow imports and focused leaf builds,
 keep expensive proofs and diagnostics outside high-fanout modules, and reserve full builds for
 configuration changes, public milestones, and final integration.
+
+### Routine focused builds
+
+Build the leaf being edited first, then only its adjacent public consumer.  Common targets are:
+
+```text
+cd formal
+lake build Toffoli.Smoke
+lake build Toffoli.Bool.Finite
+lake build Toffoli.Gate.Toffoli
+lake build Toffoli.Perm.Decomposition
+lake build Toffoli.Synthesis.Universality
+lake build Toffoli.Smooth.Extension
+lake build Toffoli.Smooth.Synthesis.Universality
+```
+
+Use `lake build Toffoli` for the discrete facade or `lake build Toffoli.Smooth` for the smooth
+facade when that public surface changes.  Do not run `lake clean` during routine development: a
+warm focused build is the intended feedback loop, while cleaning also forces the large mathlib
+dependency graph to be rebuilt.
+
+### Final all-surfaces milestone
+
+The explicit final target set covers both public facades, every boundary audit, and every axiom
+audit; the default Lake target covers only the discrete facade.  Reserve this cold command for a
+release or final integration milestone:
+
+```text
+cd formal
+lake clean
+lake build \
+  Toffoli \
+  Toffoli.Smooth \
+  Toffoli.Audit.FiniteBoundary \
+  Toffoli.Audit.GateBoundary \
+  Toffoli.Audit.GrayBoundary \
+  Toffoli.Audit.ParityBoundary \
+  Toffoli.Audit.UniversalityBoundary \
+  Toffoli.Audit.CircleBoundary \
+  Toffoli.Audit.SmoothExtensionBoundary \
+  Toffoli.Audit.SmoothSynthesisBoundary \
+  Toffoli.Audit.Axioms.Finite \
+  Toffoli.Audit.Axioms.Gate \
+  Toffoli.Audit.Axioms.Decomposition \
+  Toffoli.Audit.Axioms.Parity \
+  Toffoli.Audit.Axioms.Universality \
+  Toffoli.Audit.Axioms.Circle \
+  Toffoli.Audit.Axioms.SmoothExtension \
+  Toffoli.Audit.Axioms.SmoothSynthesis
+```
+
+The recorded clean milestone completed 2607 jobs in 1099.53 s wall time (16568.58 s user,
+1714.06 s system; maximum RSS 3009048 KiB).  Across all main-result axiom audits, the only
+reported axioms are `propext`, `Classical.choice`, and `Quot.sound`.
 
 ## Sources and operating documents
 

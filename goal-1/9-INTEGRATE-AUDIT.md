@@ -1,6 +1,6 @@
 # 9-INTEGRATE-AUDIT
 
-Status: in progress.
+Status: in progress — final correction audit pending.
 
 ## Current Facts
 
@@ -12,8 +12,14 @@ Status: in progress.
   qualified three-bit synthesis leaf.  Audit modules are not publicly imported.
 - The direct main extension and qualified smooth synthesis results use only `propext`,
   `Classical.choice`, and `Quot.sound` in their recorded axiom output.
-- Repository-wide final scans, a clean milestone build, public examples, final paper-map review,
-  and reproducibility documentation still need one integrated pass before completion.
+- The explicit clean all-surfaces milestone passed: 2607 jobs, 1099.53 s wall, 16568.58 s user,
+  1714.06 s system, and 3009048 KiB maximum RSS.
+- The import-graph audit found 69 modules and 136 internal edges, with no cycle, reverse smooth
+  dependency, umbrella import in an implementation leaf, audit import leak, or unreachable
+  implementation module.
+- Repository-wide Lean scans find no proof holes, project axioms, or `unsafe` declarations.
+- Integration and reproducibility checks have passed; a final correction audit remains before the
+  stage can be marked complete.
 
 ## Updated Assumptions
 
@@ -57,6 +63,52 @@ boundaries required by `BUILD-PLAN.md`.
   each `Toffoli.Audit.Axioms.*` leaf.
 - A full project build is required because this is the final integration milestone.
 
+### BUILD-PLAN workflow
+
+Routine development uses a warm leaf-first feedback loop.  Representative low- or terminal-leaf
+targets are:
+
+```text
+cd formal
+lake build Toffoli.Bool.Finite
+lake build Toffoli.Gate.Toffoli
+lake build Toffoli.Perm.Decomposition
+lake build Toffoli.Synthesis.Universality
+lake build Toffoli.Smooth.Extension
+lake build Toffoli.Smooth.Synthesis.Universality
+```
+
+After a public-surface change, build only the adjacent facade (`Toffoli` or `Toffoli.Smooth`).
+Audit leaves stay outside those facades.  `lake clean` is not part of the routine loop because it
+rebuilds mathlib; it is reserved for the following final all-surfaces milestone:
+
+```text
+cd formal
+lake clean
+lake build \
+  Toffoli \
+  Toffoli.Smooth \
+  Toffoli.Audit.FiniteBoundary \
+  Toffoli.Audit.GateBoundary \
+  Toffoli.Audit.GrayBoundary \
+  Toffoli.Audit.ParityBoundary \
+  Toffoli.Audit.UniversalityBoundary \
+  Toffoli.Audit.CircleBoundary \
+  Toffoli.Audit.SmoothExtensionBoundary \
+  Toffoli.Audit.SmoothSynthesisBoundary \
+  Toffoli.Audit.Axioms.Finite \
+  Toffoli.Audit.Axioms.Gate \
+  Toffoli.Audit.Axioms.Decomposition \
+  Toffoli.Audit.Axioms.Parity \
+  Toffoli.Audit.Axioms.Universality \
+  Toffoli.Audit.Axioms.Circle \
+  Toffoli.Audit.Axioms.SmoothExtension \
+  Toffoli.Audit.Axioms.SmoothSynthesis
+```
+
+This explicit list is necessary because the default Lake target is only the discrete `Toffoli`
+facade.  Setup-only validation remains available separately as `lake build Toffoli.Smoke`.
+
 ## No-Cheating Checks
 
 - Do not hide an unresolved paper claim by deleting it from the map.
@@ -88,4 +140,13 @@ boundaries required by `BUILD-PLAN.md`.
 
 ## Stage Results
 
-- Pending final integration verification.
+- The clean all-surfaces build passed all 2607 jobs.  `/usr/bin/time` recorded 1099.53 s wall,
+  16568.58 s user, 1714.06 s system, and 3009048 KiB maximum RSS.  The high cold-build cost is why
+  routine work follows the focused targets above.
+- All main-result `#print axioms` output is confined to `propext`, `Classical.choice`, and
+  `Quot.sound`; there is no project-specific axiom.
+- The 69-module, 136-edge internal import graph is acyclic.  It has no discrete-to-smooth reverse
+  edge, no implementation leaf importing an umbrella, no public module importing an audit, and no
+  unreachable implementation module.
+- Lean-source scans found no `sorry`, `admit`, project `axiom`, or `unsafe` declaration.
+- Stage completion remains pending only while the final correction audit is reviewed.
