@@ -81,19 +81,25 @@ theorem splitFirstTwo_swap (k : ℕ) (x : BoolWord (Fin (2 + k))) :
         (Equiv.refl (BoolWord (Fin k))) (splitFirstTwo k x) := by
   apply Prod.ext
   · apply Prod.ext
-    · simp only [splitFirstTwo_fst_fst, Equiv.prodCongr_apply]
-      simp [swapFirstTwoCoordinates, coordinatePerm,
-        BoolWord.reindex, Equiv.swap_apply_def]
+    · change swapFirstTwoCoordinates k x (Fin.castAdd k 0) =
+        (splitFirstTwo k x).1.2
+      rw [splitFirstTwo_fst_snd]
+      change x ((Equiv.swap (0 : Fin (2 + k)) 1).symm (Fin.castAdd k 0)) =
+        x (Fin.castAdd k 1)
       congr 1
-      rw [if_pos (by rfl)]
+      rw [Equiv.symm_swap]
+      rw [Equiv.swap_apply_def, if_pos (by rfl)]
       apply Fin.ext
       change 1 % (2 + k) = 1
       exact Nat.mod_eq_of_lt (by omega)
-    · simp only [splitFirstTwo_fst_snd, Equiv.prodCongr_apply]
-      simp [swapFirstTwoCoordinates, coordinatePerm,
-        BoolWord.reindex, Equiv.swap_apply_def]
+    · change swapFirstTwoCoordinates k x (Fin.castAdd k 1) =
+        (splitFirstTwo k x).1.1
+      rw [splitFirstTwo_fst_fst]
+      change x ((Equiv.swap (0 : Fin (2 + k)) 1).symm (Fin.castAdd k 1)) =
+        x (Fin.castAdd k 0)
       congr 1
-      rw [if_neg (by
+      rw [Equiv.symm_swap]
+      rw [Equiv.swap_apply_def, if_neg (by
         intro h
         have hval := congrArg Fin.val h
         change 1 = 0 at hval
@@ -105,11 +111,12 @@ theorem splitFirstTwo_swap (k : ℕ) (x : BoolWord (Fin (2 + k))) :
       change 0 = 0 % (2 + k)
       simp
   · funext i
-    simp only [splitFirstTwo_snd, Equiv.prodCongr_apply]
-    simp [swapFirstTwoCoordinates, coordinatePerm,
-      BoolWord.reindex, Equiv.swap_apply_def]
+    change swapFirstTwoCoordinates k x (Fin.natAdd 2 i) = x (Fin.natAdd 2 i)
+    change x ((Equiv.swap (0 : Fin (2 + k)) 1).symm (Fin.natAdd 2 i)) =
+      x (Fin.natAdd 2 i)
     congr 1
-    rw [if_neg (by
+    rw [Equiv.symm_swap]
+    rw [Equiv.swap_apply_def, if_neg (by
       intro h
       have hval := congrArg Fin.val h
       change 2 + i.val = 0 at hval

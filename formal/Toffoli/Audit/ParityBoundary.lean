@@ -1,5 +1,5 @@
 import Mathlib.Data.Fin.VecNotation
-import Toffoli.Parity.Obstruction
+import Toffoli.Parity.Paper
 
 /-!
 # Parity boundary checks
@@ -47,5 +47,18 @@ example : ∃ p : BoolPermN 1, ¬ProperlyGenerated p :=
 
 example : ∃ p : BoolPermN 2, ¬ProperlyGenerated p :=
   exists_not_properlyGenerated
+
+example : paperGenerated 0 = ⊤ :=
+  paperGenerated_zero_eq_top
+
+example : AndNand.thetaSucc 0 ∉ paperGenerated 1 :=
+  thetaSucc_zero_not_mem_paperGenerated
+
+example : AndNand.thetaSucc 1 ∉ paperGenerated 2 :=
+  thetaSucc_one_not_mem_paperGenerated
+
+example (x : BoolVec 3) (target : Fin 3) :
+    atomicEdge x target ∉ paperGenerated 3 :=
+  atomicEdge_not_mem_paperGenerated 1 (by decide) x target
 
 end Toffoli.Audit
