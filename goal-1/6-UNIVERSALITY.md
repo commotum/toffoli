@@ -1,6 +1,6 @@
 # 6-UNIVERSALITY
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -104,4 +104,63 @@ and certified dummy deletion, with a checked clean auxiliary bank and exact reso
 
 ## Stage Results
 
-- Pending.
+### Clean semantics and canonical lowering
+
+- Added `Synthesis.FaceRealizes` and `Synthesis.CleanRealizes`.  A certificate names both fixed
+  faces; clean realization requires the same auxiliary word on input and output.  Serial and
+  inverse laws, exact face membership, `Component.restrictFaces`, `RightDummy`, and certified
+  `deleteRight` bridges all compile.
+- Added placed `ThreeBitInstruction`s, a documented left-to-right `ThreeBitCircuit.eval`, ambient
+  and data-only reindexing, and range-complement lowering.  `ThreeBitLowering.eval_lower` proves
+  that every placed-gate word is a `OneToOneCircuit` whose only primitive constructor is
+  `CanonicalThreeBitAtom.gate`, interpreted as `AndNand.thetaSucc 2`.
+
+### Generalized gates and atomic edges
+
+- `MultiControl.word_cleanRealizes m` proves that the explicit circuit for the order-`m+1`
+  AND/NAND gate is clean.  Arity one uses two fixed-`true` enables, arity two uses one enable,
+  arity three is the primitive, and arity at least four uses a forward prefix-conjunction ladder,
+  one target instruction, and the exact reversed ladder.  The proof tracks unchanged data and
+  enables, completed prefixes, fresh zero work bits, and final work restoration.
+- `MultiControl.figureSeven_word` identifies the first ladder as
+  `[firstPrefix 0, targetInstruction 0, firstPrefix 0]`, and `figureSeven_apply` verifies the
+  corrected four-data/one-work Figure 7 semantics.  The two uniform enable wires are present in
+  the shared ambient type but are not used by these three instructions.
+- `Atomic.word_cleanRealizes` transports the canonical-last positive gate to an arbitrary target,
+  places the verified masked NOT word on both sides, and obtains the literal atomic edge
+  permutation.  This uses the previously proved two-sided `edgeNormalizer` conjugation, not the
+  paper's insufficient one-sided prose.
+
+### Qualified universality and resources
+
+- `ThreeBitUniversal.circuit_cleanRealizes` cleanly realizes every `BoolPermN n` over
+  `UniversalIndex n = Fin n ⊕ UniversalAux n`; `exists_circuit_cleanRealizes` is its existential
+  form.  The heavy `Perm.Decomposition` dependency occurs only in `Synthesis.Universality`.
+- The auxiliary bank is `UniversalAux n = Fin 2 ⊕ Fin (n-3)`: both `Fin 2` enables are fixed
+  `true`, every work coordinate is fixed `false`, and all are returned unchanged after the whole
+  atomic word.  Its exact size is `2 + (n-3)`, hence two for `n ≤ 3` and `n-1` for `n ≥ 3`.
+  `circuit_aux_card_le_paper_bound` proves the paper's `2n-3` bound only in the valid range
+  `3 ≤ n`.  `exists_zero_circuit_noAux` separately proves that arity zero needs no auxiliaries.
+- `circuit_restrictFaces_eq`, `circuit_rightDummy`, and `circuit_deleteRight_eq` expose the exact
+  componentwise restriction and certified deletion operations.  The result is explicitly not an
+  ancilla-free or unrestricted universality theorem.
+- `oneAux_not_faceRealizes_twoBitDoubleNot` proves that on two data bits the flattened
+  placed-three-bit/wiring/serial closure cannot realize double NOT with one fixed auxiliary,
+  even when its input and output constants may differ.  This structural invariant supplies the
+  low-arity correction without presenting it as a theorem about a broader unflattened syntax.
+
+### Verification
+
+- Focused builds passed for `FaceRealization`, `ThreeBit`, `ThreeBitLowering`,
+  `ThreeBitTransport`, `Resources`, `Not`, `MultiControl` (675 jobs), `Atomic` (680 jobs), and the
+  heavy `Universality` leaf (931 jobs).  The thin `Toffoli.Synthesis` facade passed with 933 jobs.
+- `Toffoli.Audit.UniversalityBoundary` checks Figure 7 order and semantics, empty and low arities,
+  exact counts through arity four, failure of the literal paper bound at arities one and two,
+  clean/restriction/deletion theorem signatures, and the one-auxiliary obstruction.
+- The facade/root/audit build passed with 964 jobs.  The finite-block milestone full `lake build`
+  passed with 962 jobs.  No smooth module is imported into a finite, gate, decomposition, parity,
+  or synthesis leaf.
+- `Toffoli.Audit.Axioms.Universality` reports exactly `propext`, `Classical.choice`, and
+  `Quot.sound` for representative lowering, Figure 7, generalized-gate, atomic, main universality,
+  restriction/deletion, and obstruction theorems.  Lean-source proof-hole/project-axiom/unsafe
+  scans, facade-import direction checks, `git diff --check`, and the final clean status check pass.

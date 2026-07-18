@@ -12,10 +12,11 @@ realizability are outside the verified core unless a physical model is added exp
 
 ## Status
 
-Stages 1 through 5 are complete: the source/setup audit, finite Boolean/component API,
-generalized Toffoli/AND-NAND permutations, exact Gray/atomic decomposition, and corrected
-lower-arity obstruction all build and have recorded axiom audits. Qualified universality and
-smooth extension remain in progress.
+Stages 1 through 6 are complete: the source/setup audit, finite Boolean/component API,
+generalized Toffoli/AND-NAND permutations, exact Gray/atomic decomposition, corrected
+lower-arity obstruction, and clean resource-qualified universality of the canonical three-bit
+Toffoli all build and have recorded axiom audits. The foundational explicit circle gate also
+builds in isolated smooth leaves; the main finite-to-diffeomorphic extension remains in progress.
 
 ## Lean setup
 
@@ -29,6 +30,7 @@ lake build Toffoli.Bool
 lake build Toffoli.Gate
 lake build Toffoli.Decomposition
 lake build Toffoli.Parity
+lake build Toffoli.Synthesis
 lake build Toffoli
 ```
 
@@ -46,3 +48,5 @@ configuration changes, public milestones, and final integration.
 - `goal-1/3-TOFFOLI.md`: generalized-gate design and verification evidence.
 - `goal-1/4-GRAY-DECOMP.md`: exact Gray-palindrome and finite-permutation decomposition evidence.
 - `goal-1/5-PARITY.md`: corrected lower-arity parity and low-arity obstruction evidence.
+- `goal-1/6-UNIVERSALITY.md`: clean three-bit synthesis, resources, restriction/deletion, and
+  low-arity correction evidence.

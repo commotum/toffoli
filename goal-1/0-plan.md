@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `5-PARITY` complete; Stage `6-UNIVERSALITY` in progress.
+Status: Stage `6-UNIVERSALITY` complete; Stage `7-CIRCLE-EXT` in progress.
 
 ## Big-Picture Objective
 
@@ -62,6 +62,18 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   extensions are even, bare coordinate wiring is even from three bits onward, and the complete
   paper generator subgroup is nonuniversal. The exceptional two-bit case is proved separately by
   a global-complement invariant; arities zero and one have explicit dispositions.
+- Qualified three-bit universality is implemented.  Every `BoolPermN n` has a clean
+  `OneToOneCircuit` over the sole canonical three-bit atom on
+  `Fin n ⊕ (Fin 2 ⊕ Fin (n-3))`; the two enables are fixed `true`, work bits are fixed `false`,
+  and the same word is returned.  Typed face restriction and certified dummy deletion recover the
+  requested permutation.  The exact auxiliary count is two for `n ≤ 3` and `n-1` for `n ≥ 3`;
+  the paper's `2n-3` bound is proved only for `n ≥ 3`, with a separate no-auxiliary arity-zero
+  theorem and a structural one-auxiliary obstruction at two data bits.
+- The foundational explicit circle gate is implemented in isolated smooth leaves.  It uses
+  recursive binary products of complex `Circle`, embeds Boolean `false,true` as `1,-1`, replaces
+  the paper's ambiguous iterated binary operation by a direct finite selector product, and proves
+  smoothness, involution, diffeomorphism packaging, component preservation, and exact AND/NAND
+  interpolation.  Stage 7 integration/documentation remains in progress.
 
 ## Current Assumptions to Validate
 
@@ -70,13 +82,19 @@ The paper is a source of claims and ideas, not a formal specification. Every the
 - Generalized Toffoli/AND/NAND gates should be modeled as explicit involutive permutations with a target coordinate and a finite set or predicate of control coordinates; degenerate target/control overlaps must be ruled out or assigned precise semantics.
 - Atomic bit-flip permutations and transpositions can likely bridge Gray-code paths to general finite-permutation generation.
 - The lower-arity obstruction is expected to use sign/parity after extending a gate by unused coordinates; the exact exponent and all small-arity exceptions must be derived.
-- Three-bit Toffoli universality requires a precise closure operation involving componentwise restriction and deletion of dummy coordinates. Theorem 5.2 claims at most `2n - 3` constant-input deletions for an order-`n` target when composition precedes deletion; that construction and count are not yet verified.
-- Use mathlib's complex unit `Circle` if Stage 7 validation succeeds. In the pinned version it is an analytic one-manifold and Lie group (`Mathlib.Geometry.Manifold.Instances.Sphere`), and `Circle.exp` is analytic. Angles `0,π` correspond to `1,-1`.
+- Three-bit Toffoli universality is represented by `CleanRealizes` over an explicit auxiliary
+  index type, then related separately to exact face restriction and semantic dummy deletion.  The
+  verified construction has count `2 + (n-3)` and returns all auxiliaries clean.
+- Use mathlib's complex unit `Circle`.  The foundational Stage 7 leaf confirms its analytic
+  manifold/Lie-group API, analytic `Circle.exp`, and the angle convention `0,π ↦ 1,-1`.
 - Theorem 4.1 is existential in the connected manifold `M`; it does not claim extension over every connected manifold. Any generic-manifold strengthening must be stated separately and independently justified.
-- The paper explicitly uses the circle `ℝ/(2πℤ)`, embeds Boolean `0,1` as angles `0,π`, and calls the desired map a diffeomorphism. These conventions still need a precise Lean model and proof.
+- The paper's `ℝ/(2πℤ)` is modeled by complex `Circle`; `signal_exp` relates the angular
+  selector to `(1-cos x)/2`, while the implementation avoids a quotient-representative lift.
 - Model one-to-one composition as a constrained circuit/wiring derivation whose evaluator uses ordinary equivalence composition, rather than inventing a second incompatible notion of semantic function composition.
 - Keep canonical deletion of singleton product factors distinct from semantic deletion of Boolean outputs, which requires a constancy/dummy certificate.
-- The smooth product representation is not settled: binary product manifolds are supported directly, but the pinned source does not expose a turnkey finite-Pi manifold/diffeomorphism API. Stage 7 must choose recursive products or prove an isolated finite-Pi bridge.
+- Smooth finite products use right-nested recursive binary products with a singleton Euclidean
+  zero-fold product.  Arbitrary-coordinate reindexing for the main extension theorem remains a
+  Stage 8 construction obligation.
 
 ## Tentative Formalization Direction
 
@@ -223,10 +241,10 @@ The source is present under `toffoli-1981/`. Printed pages below were checked ag
 | Printed p. 16, §3: deletion of singleton-valued dummy variables | singleton deletion plus separate semantic dummy-output API | product decompositions | Do not conflate the two operations |
 | Printed p. 17, Definition 4.1, Eq. (4.1), Remark 4.1: `θ⁽ⁿ⁾` | `ToffoliGate`, `ToffoliGate.perm`, `AndNand.thetaSucc`, component and AND/NAND lemmas | finite controls/target | Verified for every positive order; no order-zero member; `n=1,2,3` conventions checked |
 | Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | `atomicEdge`, `IsEndpointWord.eval_eq_swap`, `AtomicWord.exists_eval_eq`, masked-NOT conjugation theorems | cube adjacency, finite permutation induction | Verified with an explicit recursive palindrome and corrected two-sided conjugation |
-| Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | analytic `Circle`, finite control product | Correct the nonassociative binary-operation presentation |
+| Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | `CircleExtension.gateDiffeomorph`, `gate_interpolates_thetaSucc` | analytic `Circle`, recursive products, direct finite control product | Corrected and verified for every positive order, including zero controls/NOT |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
 | Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | `sign_extendRight`, `paperGenerated_le_evenSubgroup`, low-arity theorems | sign, explicit proper placement, coordinate wiring | Corrected and verified: parity for `n≥3`; separate complement invariant at `n=2`; trivial `n=1`; false existential conclusion at `n=0` |
-| Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | resource-indexed closure theorem | clean-ancilla recursion, dummy operations | Correct source typos and verify the `2n - 3` bound |
+| Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | `MultiControl.figureSeven_apply`, `ThreeBitUniversal.circuit_cleanRealizes`, `circuit_restrictFaces_eq`, `circuit_deleteRight_eq` | clean-ancilla recursion, atomic decomposition, dummy operations | Corrected and verified; exact count `2+(n-3)`, paper bound only for `n≥3` |
 | Printed p. 21, Theorem 5.3: smooth analogue using `Θ⁽³⁾` | qualified smooth synthesis theorem | circle gate, Theorem 5.2 | Reconstruct the one-line “parallels” proof |
 | Printed pp. 18–20 mechanisms and pp. 21–23 Appendix/energy interpretation | documentation-only boundary | explicit physical model, if ever added | Exclude from verified core by default |
 
@@ -236,29 +254,29 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 
 | ID | Issue to investigate | Risk | Required evidence before closure | Status |
 |---|---|---|---|---|
-| C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2`; document the counterexample `(π/2 ∘ π/2) ∘ π ≠ π/2 ∘ (π/2 ∘ π)` | Confirmed material correction; Lean work pending |
-| C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Open |
-| C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Open |
+| C-001 | Lemma 4.2 defines `x ∘ y = π(1-cos x)(1-cos y)/4` and claims all ring axioms except distributivity | The formula is periodic and hence well defined, but it is not associative and has no multiplicative identity; the iterated product is ambiguous | Formalize the required n-ary control directly as `π ∏ᵢ (1-cos xᵢ)/2`; document the counterexample `(π/2 ∘ π/2) ∘ π ≠ π/2 ∘ (π/2 ∘ π)` | Resolved by corrected construction: `controlProduct` is a direct finite product; `signal_exp` records the angular formula. The false ring claim is rejected |
+| C-002 | Does Eq. (4.2) define a smooth self-inverse map for every `n > 0`? | Smoothness alone is not a diffeomorphism | Two-sided inverse calculation, empty-product convention, and smoothness | Resolved for the corrected formula by `gate_involutive`, `contMDiff_gate`, `gate_bijective`, and `gateDiffeomorph`; zero controls use empty product `1` |
+| C-003 | Lemma 4.2 embeds Boolean `0,1` as circle angles `0,π`; does Eq. (4.2) recover Eq. (4.1) under all conventions? | Convention mismatch can reverse gate semantics | Evaluated truth table and quotient-point distinctness | Resolved: `boolPoint` sends `false,true` to `1,-1`; `embed_injective` proves distinctness and `gate_interpolates_thetaSucc` proves the full truth table |
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Open |
 | C-005 | Lemma 4.1 sketches a Gray-path endpoint exchange but gives no exact transposition word or composition direction | Informal order can yield the wrong permutation | Algebraic proof and exhaustive low-arity check | Resolved: `IsEndpointWord` records the exact palindrome, `eval_eq_swap` proves it, and the two-bit direction audit covers every input |
 | C-006 | Definition 4.1 assumes `n > 0`; what API and results should exist at arity `0`, and how do `n=1,2` special cases interact with later theorems? | Cardinality/parity formulas may have exceptions | Separate lemmas or uniform proof covering each | Resolved for the gate API: `thetaSucc n` has order `n+1`; no target-bearing gate exists on `Fin 0`; NOT/CNOT/three-bit cases are proved and audited. Later parity exceptions remain under C-020 |
 | C-007 | Theorem 5.1 relies on `2^(n-i)` identical copies; what is the exact sign formula for extending an `i`-ary permutation to `n` bits? | Obstruction depends on the correct exponent | Derived sign formula and checked examples | Resolved: `sign_extendRight` proves exponent `card (BoolWord κ)`, rewritten as `2 ^ card κ`; nonempty `κ` gives sign one |
 | C-008 | Theorem 5.1 concerns lower-order AND/NAND gates, not arbitrary lower-arity permutations; what is the strongest correct generalization? | The theorem may be overgeneralized | Formalize the exact statement first, then prove any generalization separately | Resolved in two layers: `ProperlyGenerated` proves the stronger placement-only arbitrary-local result; `paperGenerated` separately formalizes the exact AND/NAND-plus-wiring source generator set |
-| C-009 | Theorem 5.2 claims at most `2n-3` constant-input deletions; what are their values, lifetimes, cleanliness, and corresponding outputs? | Resource-free universality may be falsely inferred | Explicit Fig. 7-based recursion and counted synthesis witness | Open |
-| C-010 | Does restriction preserve bijectivity, or is a stable face hypothesis needed? | A restricted permutation need not map a face to itself | Precise closure/stability condition | Open |
-| C-011 | When is output deletion legitimate? | Dropping a non-dummy component changes semantics | Dependence/identity proof for every deleted coordinate | Open |
+| C-009 | Theorem 5.2 claims at most `2n-3` constant-input deletions; what are their values, lifetimes, cleanliness, and corresponding outputs? | Resource-free universality may be falsely inferred | Explicit Fig. 7-based recursion and counted synthesis witness | Resolved: `UniversalAux n = Fin 2 ⊕ Fin(n-3)`, enables are always `true`, work bits always `false`, and `circuit_cleanRealizes` returns the same bank; exact size `2+(n-3)` |
+| C-010 | Does restriction preserve bijectivity, or is a stable face hypothesis needed? | A restricted permutation need not map a face to itself | Precise closure/stability condition | Resolved: `FaceRealizes.maps_faces` proves exact source/target membership and supplies the evidence required by `restrictFaces`; clean universality preserves one named face |
+| C-011 | When is output deletion legitimate? | Dropping a non-dummy component changes semantics | Dependence/identity proof for every deleted coordinate | Resolved: `RightDummy` is an explicit constancy certificate; `circuit_rightDummy` and `circuit_deleteRight_eq` certify all deleted outputs |
 | C-012 | The paper calls a manifold diffeomorphism the appropriate generalization of a bicontinuous function; where are only continuity versus smoothness actually established? | Terminology can obscure a proof obligation | Audit each result and keep homeomorphism/diffeomorphism claims separate | Open |
 | C-013 | Are component-preservation claims literal or only up to coordinate reindexing? | Composition structure may be misstated | Typed statement and source diagram audit | Open |
 | C-014 | Are physical realizability claims mathematical consequences of the extension theorem? | Category error between existence and mechanism | Keep separate absent a formal physical model | Open |
-| C-015 | Theorem 5.2's proof on printed p. 21 writes the restriction of `φ⁽⁵⁾` as `B³ × {0}` while fixing one of five wires and claiming the other four implement `θ⁽⁴⁾` | The displayed type has only four total coordinates and cannot be a face of the five-wire circuit with four retained data wires | Correct to `B⁴ × {0}` and verify the Fig. 7 circuit algebraically | Confirmed source typo; Lean work pending |
-| C-016 | Theorem 5.2's proof on printed p. 20 says “function `φ⁽⁵⁾` of Figure 4,” but the construction is Figure 7 | Incorrect cross-reference obscures the universality gadget | Cite and formalize Figure 7 | Confirmed source typo; documentation pending |
-| C-017 | Theorem 5.2 claims at most `2n-3` constant inputs for every order `n` | The bound is negative for `n=1`; for `n=2`, one fixed wire cannot realize all two-bit permutations from three-bit Toffoli and wire permutations because the three-wire generators preserve Hamming-weight strata enough to obstruct, e.g., double NOT on the face | Prove the low-arity obstruction formally; state a corrected piecewise bound or require `3 ≤ n`; prove the remaining accounting | Confirmed material correction; exact replacement pending |
+| C-015 | Theorem 5.2's proof on printed p. 21 writes the restriction of `φ⁽⁵⁾` as `B³ × {0}` while fixing one of five wires and claiming the other four implement `θ⁽⁴⁾` | The displayed type has only four total coordinates and cannot be a face of the five-wire circuit with four retained data wires | Correct to `B⁴ × {0}` and verify the Fig. 7 circuit algebraically | Resolved: `figureSeven_word` and `figureSeven_apply` verify four retained data bits plus one zero work bit; the source face is `B⁴×{0}` |
+| C-016 | Theorem 5.2's proof on printed p. 20 says “function `φ⁽⁵⁾` of Figure 4,” but the construction is Figure 7 | Incorrect cross-reference obscures the universality gadget | Cite and formalize Figure 7 | Resolved: the declaration and audit are explicitly named `figureSeven`; Figure 4 is not used |
+| C-017 | Theorem 5.2 claims at most `2n-3` constant inputs for every order `n` | The bound is negative for `n=1`; for `n=2`, one fixed wire cannot realize all two-bit permutations from three-bit Toffoli and wire permutations because the three-wire generators preserve Hamming-weight strata enough to obstruct, e.g., double NOT on the face | Prove the low-arity obstruction formally; state a corrected piecewise bound or require `3 ≤ n`; prove the remaining accounting | Resolved with scope: the construction uses two auxiliaries for `n≤3`, `n-1` for `n≥3`, and none at `n=0` via a separate theorem; `2n-3` is proved only for `n≥3`. `oneAux_not_faceRealizes_twoBitDoubleNot` covers the flattened placed-gate/wiring/serial closure |
 | C-018 | At the start of Lemma 4.1's proof (printed p. 17), the PDF says “By definition, `θ⁽ⁿ⁾` is a permutation” where the argument requires the arbitrary given `f⁽ⁿ⁾` | The published text names the wrong function | Retain the Markdown transcription's justified correction to `f⁽ⁿ⁾` and document it | Confirmed source typo |
 | C-019 | Literal set inclusion `M ⊇ B` and the word “componentwise” are underspecified for Lean | It can be misread as a subtype requirement or coordinatewise independence | Use an explicit injective Boolean embedding/two distinct points; define componentwise interpolation on product factors without imposing false dependency restrictions | Confirmed specification correction |
 | C-020 | Theorem 5.1's proof says every allowed proper-arity operation is even, while §3 also calls coordinate reindexing one-to-one composition | A coordinate swap on `B²` is an odd vertex permutation; the parity proof as written therefore fails at ambient arity two if free reindexings are generators | Prove the parity theorem for `n ≥ 3` with free reindexing, or treat reindexing as placement/conjugation; settle `n=0,1,2` separately | Resolved: `sign_coordinatePerm_eq_one` covers `n≥3`; at `n=2` a global-complement centralizer excludes CNOT; `n=1` is trivial and at `n=0` the claimed existential obstruction is false |
 | C-021 | Lemma 4.1 says NOTs are “applied” to selected controls to obtain all edge atoms | A zero-controlled edge requires NOT conjugation both before and after `θ⁽ⁿ⁾`, not a one-sided application | Formalize the explicit conjugation and verify the edge transposition | Resolved by `edgeNormalizer_permCongr_atomicEdge` and its converse: the same masked NOT occurs before and after |
 | C-022 | Theorem 5.3 says only that its proof “parallels” Theorem 5.2 | Fixing a smooth `Θ³` control at `π` gives a valid extension but not necessarily the paper's exact lower-order `Θ` away from Boolean points; the nonassociative operation also makes higher `Θ` ambiguous | State interpolation/equivalence results, not literal off-cube equality unless separately proved; reconstruct the stable-face smooth circuit | Confirmed proof gap; Lean work pending |
-| C-023 | The natural finite model uses `Fin n → Circle`, but pinned mathlib lacks a turnkey finite-Pi `IsManifold` and diffeomorphism constructor | Assuming an instance could stall the smooth layer or pull heavy infrastructure into the core | In an early Stage 7 leaf, compare recursively nested binary products with an isolated finite-Pi manifold bridge; prove equivalence to the chosen component indexing | Open design obligation |
+| C-023 | The natural finite model uses `Fin n → Circle`, but pinned mathlib lacks a turnkey finite-Pi `IsManifold` and diffeomorphism constructor | Assuming an instance could stall the smooth layer or pull heavy infrastructure into the core | In an early Stage 7 leaf, compare recursively nested binary products with an isolated finite-Pi manifold bridge; prove equivalence to the chosen component indexing | Resolved representation choice: `CirclePower` is a right-nested binary product with a singleton Euclidean base; arbitrary-coordinate assembly/reindexing remains a Stage 8 theorem, not an assumed Pi instance |
 
 ## Dependency and Environment Notes
 
@@ -266,8 +284,9 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 
 - `formal/lean-toolchain` pins `leanprover/lean4:v4.32.0`.
 - `formal/lakefile.toml` pins mathlib commit `81a5d257c8e410db227a6665ed08f64fea08e997`; `formal/lake-manifest.json` resolves the same commit.
-- `formal/Toffoli/Smoke.lean` remains the Stage 1 diagnostic leaf. The thin root now imports the
-  verified `Toffoli.Bool` facade; finite internal leaves import only exact dependencies.
+- `formal/Toffoli/Smoke.lean` remains the Stage 1 diagnostic leaf. The thin root imports the
+  completed discrete public facades; internal leaves import only exact dependencies and never the
+  root or their own facade.
 - `Toffoli.Audit.Axioms.Finite` reports only `propext`, `Classical.choice`, and `Quot.sound` for
   representative exported finite declarations and is not imported publicly.
 - `formal/Toffoli/Gate/Toffoli.lean` has the narrow imports `Mathlib.Data.Finset.Basic` and
@@ -286,6 +305,15 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   first-two-coordinate wiring calculation and exact paper subgroup leaf. The public/root/audit
   build passed with 952 jobs; the warm full build passed in 1.38 s with 950 jobs. No sign or
   subgroup import flows into the finite, cube, gate, or decomposition cores.
+- Stage 6 universality promotion on 2026-07-17: cheap face/resource/placed-gate infrastructure is
+  separated from the prefix compiler and from the sole 931-job heavy leaf that imports arbitrary
+  permutation decomposition.  The public synthesis facade built with 933 jobs; the
+  facade/root/audit milestone passed with 964 jobs and the warm finite-block full build with 962
+  jobs.  Representative main results use only `propext`, `Classical.choice`, and `Quot.sound`.
+- Stage 7 foundational circle work on 2026-07-17 remains non-public while the stage is in
+  progress. `CircleModel`, `CircleGate`, and their axiom audit built together through 2532 jobs;
+  model/gate focused targets took about 3.1 s each.  No smooth import flows back into the finite or
+  synthesis graph.
 
 ### Expected mathlib areas to investigate
 
@@ -473,6 +501,8 @@ Derive and formalize the precise parity obstruction to generation by lower-arity
 
 ### 6-UNIVERSALITY
 
+Status: complete.
+
 #### Big Picture Objective
 
 Prove the exact qualified universality of the three-bit Toffoli gate and account for every auxiliary resource.
@@ -496,6 +526,8 @@ Prove the exact qualified universality of the three-bit Toffoli gate and account
 - Run a milestone full build at the end of the finite/discrete block and record costly dependency paths.
 
 ### 7-CIRCLE-EXT
+
+Status: in progress.
 
 #### Big Picture Objective
 
