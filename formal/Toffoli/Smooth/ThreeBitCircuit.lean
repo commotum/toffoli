@@ -103,6 +103,61 @@ theorem threeBitDiffeomorph_symm_apply {n : ℕ}
     (threeBitDiffeomorph instruction).symm p = threeBitMap instruction p :=
   rfl
 
+/-- The identity placement of the canonical three coordinates. -/
+def canonicalThreeBitInstruction : ThreeBitInstruction (Fin 3) where
+  placement := Function.Embedding.refl (Fin 3)
+
+@[simp]
+theorem canonicalThreeBitInstruction_control₁ : canonicalThreeBitInstruction.control₁ = 0 :=
+  rfl
+
+@[simp]
+theorem canonicalThreeBitInstruction_control₂ : canonicalThreeBitInstruction.control₂ = 1 :=
+  rfl
+
+@[simp]
+theorem canonicalThreeBitInstruction_target : canonicalThreeBitInstruction.target = 2 :=
+  rfl
+
+private theorem coord_castSucc (n : ℕ) (p : CirclePower (n + 1)) (i : Fin n) :
+    coord (n + 1) p i.castSucc = coord n p.1 i := by
+  simp [coord]
+
+/-- At the identity placement, the coordinatewise interpretation is exactly the corrected
+canonical three-bit circle gate, not merely another interpolant of the same Boolean truth table. -/
+theorem threeBitMap_canonical (p : CirclePower 3) :
+    threeBitMap canonicalThreeBitInstruction p = gate 2 p := by
+  apply coord_ext
+  intro i
+  fin_cases i
+  · change coord 3 (threeBitMap canonicalThreeBitInstruction p) (0 : Fin 3) =
+      coord 3 (gate 2 p) (0 : Fin 3)
+    rw [coord_threeBitMap_of_ne]
+    · exact (coord_gate_control 2 p 0).symm
+    · decide
+  · change coord 3 (threeBitMap canonicalThreeBitInstruction p) (1 : Fin 3) =
+      coord 3 (gate 2 p) (1 : Fin 3)
+    rw [coord_threeBitMap_of_ne]
+    · exact (coord_gate_control 2 p 1).symm
+    · decide
+  · change coord 3 (threeBitMap canonicalThreeBitInstruction p) (2 : Fin 3) =
+      coord 3 (gate 2 p) (2 : Fin 3)
+    rw [show (2 : Fin 3) = canonicalThreeBitInstruction.target by rfl]
+    rw [coord_threeBitMap_target]
+    simp only [canonicalThreeBitInstruction_target, canonicalThreeBitInstruction_control₁,
+      canonicalThreeBitInstruction_control₂]
+    rw [show (2 : Fin 3) = Fin.last 2 by rfl, coord_gate_target]
+    rw [controlProduct_eq_prod_signal]
+    rw [show (0 : Fin 3) = (0 : Fin 2).castSucc by rfl, coord_castSucc]
+    rw [show (1 : Fin 3) = (1 : Fin 2).castSucc by rfl, coord_castSucc]
+    rw [Fin.prod_univ_two]
+
+/-- Diffeomorphism-level identification of the identity placement with `gateDiffeomorph 2`. -/
+theorem threeBitDiffeomorph_canonical :
+    threeBitDiffeomorph canonicalThreeBitInstruction = gateDiffeomorph 2 := by
+  apply Diffeomorph.ext
+  exact threeBitMap_canonical
+
 /-- A placed smooth instruction agrees exactly with its placed Boolean instruction on embedded
 Boolean words. -/
 theorem threeBitDiffeomorph_interpolates {n : ℕ}
@@ -154,6 +209,29 @@ theorem evalThreeBitWord_append {n : ℕ} (first second : List (ThreeBitInstruct
       apply Diffeomorph.ext
       intro p
       rfl
+
+/-- Reversing a word gives the inverse smooth circuit because every placed primitive is
+self-inverse. -/
+@[simp]
+theorem evalThreeBitWord_reverse {n : ℕ} (word : List (ThreeBitInstruction (Fin n))) :
+    evalThreeBitWord word.reverse = (evalThreeBitWord word).symm := by
+  induction word with
+  | nil => rfl
+  | cons instruction word ih =>
+      rw [List.reverse_cons, evalThreeBitWord_append, ih]
+      apply Diffeomorph.ext
+      intro p
+      rfl
+
+@[simp]
+theorem evalThreeBitWord_append_reverse {n : ℕ}
+    (word : List (ThreeBitInstruction (Fin n))) :
+    evalThreeBitWord (word ++ word.reverse) =
+      Diffeomorph.refl (circlePowerModel n) (CirclePower n) ∞ := by
+  rw [evalThreeBitWord_append, evalThreeBitWord_reverse]
+  apply Diffeomorph.ext
+  intro p
+  simp
 
 /-- Smooth word evaluation agrees exactly with Boolean placed-circuit evaluation at every
 embedded Boolean point. -/

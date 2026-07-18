@@ -41,13 +41,13 @@ example :
       embed 1 ![true] := by
   rw [atomicStepDiffeomorph_interpolates]
   congr 1
+  decide
 
 example :
     atomicDiffeomorph oneBitStep.base oneBitStep.target (embed 1 ![true]) =
       embed 1 ![false] := by
   rw [atomicStepDiffeomorph_interpolates]
   congr 1
-  decide
 
 example (p : CirclePower 1) : atomicActivation oneBitStep.base oneBitStep.target p = 1 := by
   simp [atomicActivation, oneBitStep]
