@@ -38,17 +38,17 @@ def projectUniversal (n : ℕ) (p : CirclePower (n + auxCount n)) : CirclePower 
 @[simp]
 theorem coord_insertUniversal_data (n : ℕ) (p : CirclePower n) (i : Fin n) :
     coord (n + auxCount n) (insertUniversal n p) (flatDataIndex i) = coord n p i := by
-  simp [insertUniversal, flatDataIndex, universalIndexFinEquiv]
+  simp only [insertUniversal, coord_assemble, universalIndexFinEquiv_symm_data, dataIndex]
 
 @[simp]
 theorem coord_insertUniversal_enable (n : ℕ) (p : CirclePower n) (i : Fin 2) :
     coord (n + auxCount n) (insertUniversal n p) (flatEnableIndex i) = boolPoint true := by
-  simp [insertUniversal, flatEnableIndex, universalIndexFinEquiv]
+  simp only [insertUniversal, coord_assemble, universalIndexFinEquiv_symm_enable, enableIndex]
 
 @[simp]
 theorem coord_insertUniversal_work (n : ℕ) (p : CirclePower n) (i : Fin (n - 3)) :
     coord (n + auxCount n) (insertUniversal n p) (flatWorkIndex i) = boolPoint false := by
-  simp [insertUniversal, flatWorkIndex, universalIndexFinEquiv]
+  simp only [insertUniversal, coord_assemble, universalIndexFinEquiv_symm_work, workIndex]
 
 @[simp]
 theorem coord_projectUniversal (n : ℕ) (p : CirclePower (n + auxCount n)) (i : Fin n) :
@@ -64,7 +64,7 @@ theorem contMDiff_insertUniversal (n : ℕ) :
   generalize hindex : (universalIndexFinEquiv n).symm j = index
   rcases index with i | i
   · simpa only [hindex] using contMDiff_coord n i
-  · rcases i with i | i <;> simp only [hindex] <;> exact contMDiff_const
+  · rcases i with i | i <;> exact contMDiff_const
 
 theorem contMDiff_projectUniversal (n : ℕ) :
     ContMDiff (circlePowerModel (n + auxCount n)) (circlePowerModel n) ∞
@@ -92,8 +92,25 @@ theorem insertUniversal_embed (n : ℕ) (x : BoolVec n) :
   rw [← (universalIndexFinEquiv n).apply_symm_apply j]
   generalize hindex : (universalIndexFinEquiv n).symm j = index
   rcases index with i | i
-  · simp
-  · rcases i with i | i <;> simp
+  · rw [coord_embed, flatUniversalInput_layout]
+    rw [show universalIndexFinEquiv n (Sum.inl i) = flatDataIndex i by
+      exact universalIndexFinEquiv_data i]
+    simp [universalInput]
+  · rcases i with i | i
+    · rw [coord_embed, flatUniversalInput_layout]
+      rw [show universalIndexFinEquiv n (Sum.inr (Sum.inl i)) = flatEnableIndex i by
+        exact universalIndexFinEquiv_enable i]
+      simp [universalInput]
+    · rw [coord_embed, flatUniversalInput_layout]
+      rw [show universalIndexFinEquiv n (Sum.inr (Sum.inr i)) = flatWorkIndex i by
+        exact universalIndexFinEquiv_work i]
+      simp [universalInput]
+
+@[simp]
+theorem projectUniversal_embed_flatUniversalInput (n : ℕ) (x : BoolVec n) :
+    projectUniversal n (embed (n + auxCount n) (flatUniversalInput x)) = embed n x := by
+  rw [← insertUniversal_embed]
+  exact projectUniversal_insertUniversal n (embed n x)
 
 /-- Points of the universal face have the two enables fixed at Boolean `true` and every work
 coordinate fixed at Boolean `false`. -/
@@ -127,10 +144,25 @@ theorem insertUniversal_projectUniversal_iff (n : ℕ)
     rw [← (universalIndexFinEquiv n).apply_symm_apply j]
     generalize hindex : (universalIndexFinEquiv n).symm j = index
     rcases index with i | i
-    · simp
+    · change
+        coord (n + auxCount n) (insertUniversal n (projectUniversal n p))
+            (universalIndexFinEquiv n (dataIndex i)) =
+          coord (n + auxCount n) p (universalIndexFinEquiv n (dataIndex i))
+      rw [universalIndexFinEquiv_data]
+      simp
     · rcases i with i | i
-      · simpa using henable i
-      · simpa using hwork i
+      · change
+          coord (n + auxCount n) (insertUniversal n (projectUniversal n p))
+              (universalIndexFinEquiv n (enableIndex i)) =
+            coord (n + auxCount n) p (universalIndexFinEquiv n (enableIndex i))
+        rw [universalIndexFinEquiv_enable]
+        simpa using (henable i).symm
+      · change
+          coord (n + auxCount n) (insertUniversal n (projectUniversal n p))
+              (universalIndexFinEquiv n (workIndex i)) =
+            coord (n + auxCount n) p (universalIndexFinEquiv n (workIndex i))
+        rw [universalIndexFinEquiv_work]
+        simpa using (hwork i).symm
 
 theorem insertUniversal_projectUniversal_of_face (n : ℕ)
     {p : CirclePower (n + auxCount n)} (hp : OnUniversalFace n p) :
@@ -158,12 +190,18 @@ def restrictUniversalOfMapsFace (n : ℕ)
         intro p
         have hface : OnUniversalFace n (F (insertUniversal n p)) :=
           hforward _ (onUniversalFace_insertUniversal n p)
+        change
+          projectUniversal n
+              (F.symm (insertUniversal n (projectUniversal n (F (insertUniversal n p))))) = p
         rw [insertUniversal_projectUniversal_of_face n hface]
         simp
       right_inv := by
         intro p
         have hface : OnUniversalFace n (F.symm (insertUniversal n p)) :=
           hinverse _ (onUniversalFace_insertUniversal n p)
+        change
+          projectUniversal n
+              (F (insertUniversal n (projectUniversal n (F.symm (insertUniversal n p))))) = p
         rw [insertUniversal_projectUniversal_of_face n hface]
         simp }
   contMDiff_toFun :=
@@ -182,6 +220,17 @@ theorem restrictUniversalOfMapsFace_apply (n : ℕ)
     (p : CirclePower n) :
     restrictUniversalOfMapsFace n F hforward hinverse p =
       projectUniversal n (F (insertUniversal n p)) :=
+  rfl
+
+@[simp]
+theorem restrictUniversalOfMapsFace_symm_apply (n : ℕ)
+    (F : Diffeomorph (circlePowerModel (n + auxCount n))
+      (circlePowerModel (n + auxCount n))
+      (CirclePower (n + auxCount n)) (CirclePower (n + auxCount n)) ∞)
+    (hforward : MapsUniversalFace n F) (hinverse : MapsUniversalFace n F.symm)
+    (p : CirclePower n) :
+    (restrictUniversalOfMapsFace n F hforward hinverse).symm p =
+      projectUniversal n (F.symm (insertUniversal n p)) :=
   rfl
 
 /-- Strong componentwise hypothesis: an ambient diffeomorphism leaves every auxiliary coordinate
@@ -239,6 +288,15 @@ theorem restrictUniversal_apply (n : ℕ)
       (CirclePower (n + auxCount n)) (CirclePower (n + auxCount n)) ∞)
     (hF : PreservesUniversalAux n F) (p : CirclePower n) :
     restrictUniversal n F hF p = projectUniversal n (F (insertUniversal n p)) :=
+  rfl
+
+@[simp]
+theorem restrictUniversal_symm_apply (n : ℕ)
+    (F : Diffeomorph (circlePowerModel (n + auxCount n))
+      (circlePowerModel (n + auxCount n))
+      (CirclePower (n + auxCount n)) (CirclePower (n + auxCount n)) ∞)
+    (hF : PreservesUniversalAux n F) (p : CirclePower n) :
+    (restrictUniversal n F hF).symm p = projectUniversal n (F.symm (insertUniversal n p)) :=
   rfl
 
 end CircleExtension
