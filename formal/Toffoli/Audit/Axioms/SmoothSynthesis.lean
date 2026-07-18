@@ -1,0 +1,25 @@
+import Toffoli.Smooth.Synthesis.Universality
+
+/-!
+# Qualified smooth-synthesis axiom audit
+
+This diagnostic leaf reports assumptions from atomic auxiliary stability through the final
+ambient circuit, smooth-face restriction, interpolation theorem, and qualified existential
+result.
+-/
+
+#print axioms Toffoli.CircleExtension.AtomicStability.atomicWord_preservesUniversalAux
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.compileAtomicWord_preservesUniversalAux
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.nestedWord_cleanRealizes
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.ambient_interpolates_insertedBoolean
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.ambient_preservesUniversalAux
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.restricted
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.ambient_insert_eq_insert_restricted
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.restricted_interpolates
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.exists_restricted_extension_from_threeBit
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.exists_qualified_smooth_realization
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.auxiliary_card_eq_two
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.auxiliary_card_eq_sub_one
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.ambient_zero_eq_refl
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.restricted_zero_eq_refl
+#print axioms Toffoli.CircleExtension.ThreeBitUniversal.exists_zero_extension_noAux
