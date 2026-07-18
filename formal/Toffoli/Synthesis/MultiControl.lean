@@ -551,13 +551,18 @@ theorem eval_word_three_apply (x : BoolVec 3) :
         simp only [threeInstruction, ThreeBitInstruction.ofDistinct_control₁,
           ThreeBitInstruction.ofDistinct_control₂, ThreeBitInstruction.ofDistinct_target,
           inputState_data]
+        change (if x 0 = true ∧ x 1 = true then !x 2 else x 2) =
+          AndNand.thetaSucc 2 x (Fin.last 2)
         rw [AndNand.thetaSucc_apply_target]
         simp [Fin.forall_fin_two]
       · obtain ⟨j, rfl⟩ := Fin.eq_castSucc_of_ne_last hj
         rw [threeInstruction.perm_apply_of_ne_target]
         · change x j.castSucc = AndNand.thetaSucc 2 x j.castSucc
           exact (AndNand.thetaSucc_apply_control 2 x j).symm
-        · simp [threeInstruction, dataIndex, Fin.castSucc_ne_last]
+        · simp only [threeInstruction, ThreeBitInstruction.ofDistinct_target, dataIndex,
+            ne_eq, Sum.inl.injEq]
+          change j.castSucc ≠ Fin.last 2
+          exact Fin.castSucc_ne_last j
   | inr aux =>
       rw [threeInstruction.perm_apply_of_ne_target]
       · rfl
@@ -589,6 +594,49 @@ theorem eval_word_add_four_apply (k : ℕ) (x : BoolVec (k + 4)) :
   by_cases hall : ∀ i : Fin (k + 3), x i.castSucc = true
   · rw [if_pos hall, if_pos hall, hcommute, hrestore, inputState_flipAt_data]
   · rw [if_neg hall, if_neg hall, hrestore]
+
+/-- The first nontrivial ladder is exactly the corrected Figure 7 order: compute the first
+conjunction, act on the data target, then uncompute the same work bit. -/
+theorem figureSeven_word :
+    word 4 = [firstPrefix 0, targetInstruction 0, firstPrefix 0] := by
+  rfl
+
+/-- Semantic verification of the corrected five-essential-wire Figure 7 construction.  The
+uniform circuit carries two additional enable wires, which this three-instruction word leaves
+untouched. -/
+theorem figureSeven_apply (x : BoolVec 4) :
+    ThreeBitCircuit.eval [firstPrefix 0, targetInstruction 0, firstPrefix 0] (inputState x) =
+      inputState (AndNand.thetaSucc 3 x) := by
+  rw [← figureSeven_word]
+  exact eval_word_add_four_apply 0 x
+
+/-- The explicit placed-three-bit word cleanly realizes every positive-arity member of the
+paper's AND/NAND family.  The argument `m` is the number of controls, so the data arity is
+`m + 1`. -/
+theorem word_cleanRealizes (m : ℕ) :
+    CleanRealizes (ThreeBitCircuit.eval (word (m + 1))) (universalConstants (m + 1))
+      (AndNand.thetaSucc m) := by
+  intro x
+  change ThreeBitCircuit.eval (word (m + 1)) (inputState x) =
+    inputState (AndNand.thetaSucc m x)
+  cases m with
+  | zero => exact eval_word_one_apply x
+  | succ m =>
+      cases m with
+      | zero => exact eval_word_two_apply x
+      | succ m =>
+          cases m with
+          | zero => exact eval_word_three_apply x
+          | succ k => exact eval_word_add_four_apply k x
+
+theorem perm_cleanRealizes (m : ℕ) :
+    CleanRealizes (perm (m + 1)) (universalConstants (m + 1)) (AndNand.thetaSucc m) :=
+  word_cleanRealizes m
+
+@[simp]
+theorem eval_word_zero :
+    ThreeBitCircuit.eval (word 0) = Equiv.refl (BoolWord (UniversalIndex 0)) :=
+  rfl
 
 end MultiControl
 

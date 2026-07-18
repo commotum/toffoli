@@ -2,6 +2,7 @@ import Toffoli.Bool
 import Toffoli.Decomposition
 import Toffoli.Gate
 import Toffoli.Parity
+import Toffoli.Synthesis
 
 /-!
 # Toffoli
