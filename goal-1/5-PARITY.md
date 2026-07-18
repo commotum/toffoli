@@ -1,6 +1,6 @@
 # 5-PARITY
 
-Status: in progress.
+Status: complete.
 
 ## Current Facts
 
@@ -82,4 +82,25 @@ low-arity exception made explicit.
 
 ## Stage Results
 
-- Pending.
+- Added `Parity.Lift` with
+  `sign_extendRight p = sign(p) ^ card (BoolWord unused)` and its `2 ^ card unused` corollary.
+  A nonempty unused coordinate factor therefore makes every lifted local permutation even.
+- Added `ProperLift` and `ProperlyGenerated`. This placement/conjugation-only closure permits an
+  arbitrary local permutation, not merely AND/NAND, and `exists_not_properlyGenerated` excludes a
+  full atomic edge on every nonempty finite ambient cube.
+- Added `Parity.Wiring`. A coordinate transposition on `2 + k` bits has sign
+  `(-1) ^ (2 ^ k)`; permutation induction proves every bare coordinate wiring even when `0 < k`.
+- Added the exact paper generator subgroup in `Parity.Paper`: proper-order AND/NAND placements plus
+  bare coordinate wirings. For `n ≥ 3` it lies in the even subgroup, so a full atomic edge is not
+  generated.
+- Settled all exceptional arities. At `n=0`, `paperGenerated_zero_eq_top` proves there is no
+  obstruction. At `n=1`, the generator subgroup is trivial and NOT is excluded. At `n=2`, the
+  coordinate swap is odd, so the printed parity proof is invalid; nevertheless every generator
+  commutes with global bitwise complement while CNOT does not, proving
+  `thetaSucc_one_not_mem_paperGenerated`.
+- `ParityBoundary` checks the repetition exponent and the odd/even two-/three-bit wiring examples.
+  `Axioms.Parity` reports only `propext`, `Classical.choice`, and `Quot.sound` for the exported
+  results.
+- Focused leaves, paper/root/audit promotion (952 jobs), and the warm milestone full build
+  (950 jobs, 1.38 s) passed without warnings. Placeholder, broad-import, and whitespace scans
+  passed. Sign and subgroup infrastructure remains entirely above finite/gate/decomposition core.

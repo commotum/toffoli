@@ -2,7 +2,7 @@
 
 Shorthand goal: `TOFFOLI-LIB`
 
-Status: Stage `4-GRAY-DECOMP` complete; Stage `5-PARITY` in progress.
+Status: Stage `5-PARITY` complete; Stage `6-UNIVERSALITY` in progress.
 
 ## Big-Picture Objective
 
@@ -58,6 +58,10 @@ The paper is a source of claims and ideas, not a formal specification. Every the
   endpoint transpositions use a checked recursive palindrome in documented left-to-right order,
   and `AtomicWord.exists_eval_eq` decomposes every finite Boolean permutation. Arbitrary edge
   patterns are related to the AND/NAND family by proved two-sided masked-NOT conjugation.
+- The lower-arity obstruction is implemented with exact sign accounting. Proper identity
+  extensions are even, bare coordinate wiring is even from three bits onward, and the complete
+  paper generator subgroup is nonuniversal. The exceptional two-bit case is proved separately by
+  a global-complement invariant; arities zero and one have explicit dispositions.
 
 ## Current Assumptions to Validate
 
@@ -221,7 +225,7 @@ The source is present under `toffoli-1981/`. Printed pages below were checked ag
 | Printed p. 17, Lemma 4.1: generation by `θ⁽ⁿ⁾` and `θ⁽¹⁾` | `atomicEdge`, `IsEndpointWord.eval_eq_swap`, `AtomicWord.exists_eval_eq`, masked-NOT conjugation theorems | cube adjacency, finite permutation induction | Verified with an explicit recursive palindrome and corrected two-sided conjugation |
 | Printed p. 18, Lemma 4.2, Eq. (4.2): circle extension `Θ⁽ⁿ⁾` | smooth involutive diffeomorphism | analytic `Circle`, finite control product | Correct the nonassociative binary-operation presentation |
 | Printed p. 18, Theorem 4.1: extension over an existential connected manifold | main finite-to-smooth extension theorem | Lemmas 4.1–4.2 | Formalize without physical interpretation |
-| Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | parity non-generation theorem | sign and dummy-coordinate lift | Re-derive, including boundary cases |
+| Printed p. 20, Theorem 5.1: lower-order `θ` gates generate only even permutations | `sign_extendRight`, `paperGenerated_le_evenSubgroup`, low-arity theorems | sign, explicit proper placement, coordinate wiring | Corrected and verified: parity for `n≥3`; separate complement invariant at `n=2`; trivial `n=1`; false existential conclusion at `n=0` |
 | Printed pp. 20–21, Theorem 5.2 and Fig. 7: `θ⁽³⁾` universality with restriction/deletion | resource-indexed closure theorem | clean-ancilla recursion, dummy operations | Correct source typos and verify the `2n - 3` bound |
 | Printed p. 21, Theorem 5.3: smooth analogue using `Θ⁽³⁾` | qualified smooth synthesis theorem | circle gate, Theorem 5.2 | Reconstruct the one-line “parallels” proof |
 | Printed pp. 18–20 mechanisms and pp. 21–23 Appendix/energy interpretation | documentation-only boundary | explicit physical model, if ever added | Exclude from verified core by default |
@@ -238,8 +242,8 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-004 | Theorem 4.1 is existential in `M`; should any reusable generic-manifold theorem be attempted? | Accidentally strengthening “there exists connected `M`” to “every connected `M`” | Keep existential circle theorem primary; require independent hypotheses/proof for any generic result | Open |
 | C-005 | Lemma 4.1 sketches a Gray-path endpoint exchange but gives no exact transposition word or composition direction | Informal order can yield the wrong permutation | Algebraic proof and exhaustive low-arity check | Resolved: `IsEndpointWord` records the exact palindrome, `eval_eq_swap` proves it, and the two-bit direction audit covers every input |
 | C-006 | Definition 4.1 assumes `n > 0`; what API and results should exist at arity `0`, and how do `n=1,2` special cases interact with later theorems? | Cardinality/parity formulas may have exceptions | Separate lemmas or uniform proof covering each | Resolved for the gate API: `thetaSucc n` has order `n+1`; no target-bearing gate exists on `Fin 0`; NOT/CNOT/three-bit cases are proved and audited. Later parity exceptions remain under C-020 |
-| C-007 | Theorem 5.1 relies on `2^(n-i)` identical copies; what is the exact sign formula for extending an `i`-ary permutation to `n` bits? | Obstruction depends on the correct exponent | Derived sign formula and checked examples | Open |
-| C-008 | Theorem 5.1 concerns lower-order AND/NAND gates, not arbitrary lower-arity permutations; what is the strongest correct generalization? | The theorem may be overgeneralized | Formalize the exact statement first, then prove any generalization separately | Open |
+| C-007 | Theorem 5.1 relies on `2^(n-i)` identical copies; what is the exact sign formula for extending an `i`-ary permutation to `n` bits? | Obstruction depends on the correct exponent | Derived sign formula and checked examples | Resolved: `sign_extendRight` proves exponent `card (BoolWord κ)`, rewritten as `2 ^ card κ`; nonempty `κ` gives sign one |
+| C-008 | Theorem 5.1 concerns lower-order AND/NAND gates, not arbitrary lower-arity permutations; what is the strongest correct generalization? | The theorem may be overgeneralized | Formalize the exact statement first, then prove any generalization separately | Resolved in two layers: `ProperlyGenerated` proves the stronger placement-only arbitrary-local result; `paperGenerated` separately formalizes the exact AND/NAND-plus-wiring source generator set |
 | C-009 | Theorem 5.2 claims at most `2n-3` constant-input deletions; what are their values, lifetimes, cleanliness, and corresponding outputs? | Resource-free universality may be falsely inferred | Explicit Fig. 7-based recursion and counted synthesis witness | Open |
 | C-010 | Does restriction preserve bijectivity, or is a stable face hypothesis needed? | A restricted permutation need not map a face to itself | Precise closure/stability condition | Open |
 | C-011 | When is output deletion legitimate? | Dropping a non-dummy component changes semantics | Dependence/identity proof for every deleted coordinate | Open |
@@ -251,7 +255,7 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
 | C-017 | Theorem 5.2 claims at most `2n-3` constant inputs for every order `n` | The bound is negative for `n=1`; for `n=2`, one fixed wire cannot realize all two-bit permutations from three-bit Toffoli and wire permutations because the three-wire generators preserve Hamming-weight strata enough to obstruct, e.g., double NOT on the face | Prove the low-arity obstruction formally; state a corrected piecewise bound or require `3 ≤ n`; prove the remaining accounting | Confirmed material correction; exact replacement pending |
 | C-018 | At the start of Lemma 4.1's proof (printed p. 17), the PDF says “By definition, `θ⁽ⁿ⁾` is a permutation” where the argument requires the arbitrary given `f⁽ⁿ⁾` | The published text names the wrong function | Retain the Markdown transcription's justified correction to `f⁽ⁿ⁾` and document it | Confirmed source typo |
 | C-019 | Literal set inclusion `M ⊇ B` and the word “componentwise” are underspecified for Lean | It can be misread as a subtype requirement or coordinatewise independence | Use an explicit injective Boolean embedding/two distinct points; define componentwise interpolation on product factors without imposing false dependency restrictions | Confirmed specification correction |
-| C-020 | Theorem 5.1's proof says every allowed proper-arity operation is even, while §3 also calls coordinate reindexing one-to-one composition | A coordinate swap on `B²` is an odd vertex permutation; the parity proof as written therefore fails at ambient arity two if free reindexings are generators | Prove the parity theorem for `n ≥ 3` with free reindexing, or treat reindexing as placement/conjugation; settle `n=0,1,2` separately | Confirmed proof gap; theorem disposition pending |
+| C-020 | Theorem 5.1's proof says every allowed proper-arity operation is even, while §3 also calls coordinate reindexing one-to-one composition | A coordinate swap on `B²` is an odd vertex permutation; the parity proof as written therefore fails at ambient arity two if free reindexings are generators | Prove the parity theorem for `n ≥ 3` with free reindexing, or treat reindexing as placement/conjugation; settle `n=0,1,2` separately | Resolved: `sign_coordinatePerm_eq_one` covers `n≥3`; at `n=2` a global-complement centralizer excludes CNOT; `n=1` is trivial and at `n=0` the claimed existential obstruction is false |
 | C-021 | Lemma 4.1 says NOTs are “applied” to selected controls to obtain all edge atoms | A zero-controlled edge requires NOT conjugation both before and after `θ⁽ⁿ⁾`, not a one-sided application | Formalize the explicit conjugation and verify the edge transposition | Resolved by `edgeNormalizer_permCongr_atomicEdge` and its converse: the same masked NOT occurs before and after |
 | C-022 | Theorem 5.3 says only that its proof “parallels” Theorem 5.2 | Fixing a smooth `Θ³` control at `π` gives a valid extension but not necessarily the paper's exact lower-order `Θ` away from Boolean points; the nonassociative operation also makes higher `Θ` ambiguous | State interpolation/equivalence results, not literal off-cube equality unless separately proved; reconstruct the stable-face smooth circuit | Confirmed proof gap; Lean work pending |
 | C-023 | The natural finite model uses `Fin n → Circle`, but pinned mathlib lacks a turnkey finite-Pi `IsManifold` and diffeomorphism constructor | Assuming an instance could stall the smooth layer or pull heavy infrastructure into the core | In an early Stage 7 leaf, compare recursively nested binary products with an isolated finite-Pi manifold bridge; prove equivalence to the chosen component indexing | Open design obligation |
@@ -278,6 +282,10 @@ This is an audit queue, not a finding that the paper is wrong. Every entry must 
   `Perm.Decomposition` heavy leaf. The facade/root/audit build passed (943 jobs), the warm full
   build passed in 1.41 s (940 jobs), and the decomposition axiom audit contains only standard
   foundations.
+- Stage 5 parity promotion on 2026-07-17: generic lift/serial leaves are separated from the
+  first-two-coordinate wiring calculation and exact paper subgroup leaf. The public/root/audit
+  build passed with 952 jobs; the warm full build passed in 1.38 s with 950 jobs. No sign or
+  subgroup import flows into the finite, cube, gate, or decomposition cores.
 
 ### Expected mathlib areas to investigate
 
@@ -440,6 +448,8 @@ Prove an exact decomposition of arbitrary Boolean permutations into atomic bit-f
 - Run a milestone full build because this decomposition is a major dependency boundary; record its result and any expensive modules.
 
 ### 5-PARITY
+
+Status: complete.
 
 #### Big Picture Objective
 
