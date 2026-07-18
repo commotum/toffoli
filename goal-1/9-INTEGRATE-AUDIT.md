@@ -89,6 +89,7 @@ rebuilds mathlib; it is reserved for the following final all-surfaces milestone:
 cd formal
 lake clean
 lake build \
+  Toffoli.Smoke \
   Toffoli \
   Toffoli.Smooth \
   Toffoli.Audit.FiniteBoundary \
@@ -112,7 +113,7 @@ lake build \
 ```
 
 This explicit list is necessary because the default Lake target is only the discrete `Toffoli`
-facade.  Setup-only validation remains available separately as `lake build Toffoli.Smoke`.
+facade; the setup smoke, isolated smooth facade, and audit leaves are otherwise omitted.
 
 ## No-Cheating Checks
 

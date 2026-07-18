@@ -11,3 +11,6 @@ wheels/
 
 # Lean/Lake generated files
 .lake/
+
+# OS metadata
+.DS_Store

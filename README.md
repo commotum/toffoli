@@ -77,6 +77,7 @@ release or final integration milestone:
 cd formal
 lake clean
 lake build \
+  Toffoli.Smoke \
   Toffoli \
   Toffoli.Smooth \
   Toffoli.Audit.FiniteBoundary \
