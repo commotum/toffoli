@@ -45,3 +45,4 @@ configuration changes, public milestones, and final integration.
 - `goal-1/2-FINITE-CORE.md`: finite API design and verification evidence.
 - `goal-1/3-TOFFOLI.md`: generalized-gate design and verification evidence.
 - `goal-1/4-GRAY-DECOMP.md`: exact Gray-palindrome and finite-permutation decomposition evidence.
+- `goal-1/5-PARITY.md`: corrected lower-arity parity and low-arity obstruction evidence.
